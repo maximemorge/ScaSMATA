@@ -1,2 +1,31 @@
+### OSX ###
+*.DS_Store
+
+### SBT ###
+target/
+lib_managed/
+src_managed/
+project/boot/
+.history
+.cache
+
+# sbt specific
+.lib/
+dist/*
+project/plugins/project/
+
+### Scala ###
 *.class
 *.log
+
+### Emacs ###
+\#*\#
+
+### Intellij ###
+.idea/
+*.iml
+.cache-main
+
+project/build.properties
+project/project/
+experiments/figures/
