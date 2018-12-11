@@ -13,7 +13,7 @@ import org.scasmata.environment._
   * @param environment
   */
 class UI(val environment: Environment) extends MainFrame {
-  title = "ScaSMATA GUI"
+  title = "ScaSMATA (Scalable Situated Multi-Agent Task Allocation) GUI"
   private val boardSquares = Array.ofDim[Label](environment.height, environment.width)
   // North
   private val toolPanel = new BoxPanel(Orientation.Horizontal) {
