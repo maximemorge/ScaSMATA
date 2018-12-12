@@ -15,7 +15,6 @@ its implementation.
 In order to run the demonstration you need:
 
 - the Java virtual machine [JVM 1.8.0_60](http://www.oracle.com/technetwork/java/javase/downloads/index.html).
-prescriptive-analytics/cplex-optimizer)
 
 In order to compile the code you need:
 
