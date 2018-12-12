@@ -12,7 +12,7 @@ import scala.swing.event.ValueChanged
   * @param j the column
   */
 class Cell(i: Int, j : Int) extends Publisher{
-
+  val debug = true
   var content : Entity = NoEntity
 
   /**
@@ -29,6 +29,7 @@ class Cell(i: Int, j : Int) extends Publisher{
       case NoEntity =>
         "nothing"
     }) + ".png"
+    if (debug) println(path)
     val url = getClass.getResource(path)
     //In order to resize the image
     val image = new ImageIcon(new ImageIcon(url).getImage.getScaledInstance(100, 100, Image.SCALE_SMOOTH))

@@ -9,7 +9,7 @@ import org.scasmata.executor.SingleExecutor
   */
 object Main{
   def main(args: Array[String]): Unit = {
-    val env = new Environment( height = 8, width = 16)
+    val env = new Environment( height = 4, width = 8, nbAgentBodies = 1, nbPackets = 1, maxSizePackets = 1)
     val system = ActorSystem("MScaSMATASolver") //The Actor system
     val executor = new SingleExecutor(env, system)
     val ui = new UI(env,executor)

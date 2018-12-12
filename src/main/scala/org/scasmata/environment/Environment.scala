@@ -3,22 +3,19 @@ package org.scasmata.environment
 
 import scala.util.Random
 import scala.collection.mutable.ListBuffer
+import scala.util.Random
 
 /**
   * A representation of the environment
   * @param height of the environment
   * @param width of the environment
   */
-class Environment(val height: Int, val width: Int) {
+class Environment(val height: Int, val width: Int,
+                  val nbCollectionPoints : Int = 1, val nbAgentBodies  : Int = 1,  val nbPackets : Int = 1, val maxSizePackets : Int= 1) {
   val debug = false
-
-  val nbCollectionPoints = 1
-  val nbAgentBodies  = 1
-  val nbPackets = 1
 
   val colorPackets = Red
   val colorCollectionPoint = Red
-  val sizePacket = 1
 
   //Create the grid
   private val grid = Array.ofDim[Cell](height, width)
@@ -54,7 +51,7 @@ class Environment(val height: Int, val width: Int) {
       idPacket += 1
       val (i, j) = coordinates.remove(random.nextInt(coordinates.length))
       if (debug) println(s"Add packet in ($i, $j)")
-      grid(i)(j).setContent(Packet(id = idPacket, colorPackets, size = sizePacket))
+      grid(i)(j).setContent(Packet(id = idPacket, colorPackets, size = 1+random.nextInt(maxSizePackets)))
     }
     for (k <- 0 until nbCollectionPoints) {
       val (i, j) = coordinates.remove(random.nextInt(coordinates.length))

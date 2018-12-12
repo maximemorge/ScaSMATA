@@ -16,9 +16,6 @@ import org.scasmata.actor.{Start,Outcome,MAScheduler}
   */
 class SingleExecutor(override val  environment: Environment, override val system: ActorSystem) extends Executor(environment,system) {
 
-  if (environment.nbAgentBodies != 1 && environment.nbPackets !=1)
-    throw new RuntimeException("SingleExecutor runs for a single agent with a single packet")
-
   // Launch a new MAScheduler
   SingleExecutor.id+=1
   val scheduler : ActorRef = system.actorOf(Props(classOf[MAScheduler], environment), name = "Scheduler"+SingleExecutor.id)
@@ -27,6 +24,8 @@ class SingleExecutor(override val  environment: Environment, override val system
     * Returns the number of steps for each body to collect all the packets
     */
   def run() : Map[Int,Int] = {
+    if (environment.nbAgentBodies != 1 && environment.nbPackets !=1)
+      throw new RuntimeException("SingleExecutor runs for a single agent with a single packet")
     if (debug) println("Start SingleExecutor")
     val future = scheduler ? Start
     val result = Await.result(future, timeout.duration).asInstanceOf[Outcome]

@@ -10,6 +10,19 @@ We have implemented our prototype with the
 actor model, allows us to fill the gap between the specification and
 its implementation.
 
+In order to illustrate the situated multi-agent task allocation problem,
+we consider the abstract application called "Packet-World". Agents are 
+situated, they are explicitly placed in an environment, i.e a two dimensional 
+grid consisting of packages and destinations. A number of differently
+colored packets are scattered over the rectangular grid.
+
+A job is the set of tasks of the agents to deliver all packets in the
+world. An agent can pick up a packet and put it down. The job efficiency 
+represents the number of steps, packet manipulations and message exchanges. 
+The "heavy packets" must be manipulated simultaneously by at most two agents 
+
+![Snapshote](snapshot.png)
+
 ## Requirements
 
 In order to run the demonstration you need:
