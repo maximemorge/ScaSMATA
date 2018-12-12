@@ -3,30 +3,38 @@ package org.scasmata.util
 
 import scala.swing._
 import java.awt.Color
-import scala.swing.BorderPanel.Position._
 import scala.swing.event.ValueChanged
 
 import org.scasmata.environment._
+import org.scasmata.executor.Executor
 
 /**
   * Class representing the user interface
-  * @param environment
+  * @param environment where agent interacts
+  * @param executor which performs the job
   */
-class UI(val environment: Environment) extends MainFrame {
+class UI(val environment: Environment, val executor : Executor) extends MainFrame {
   title = "ScaSMATA (Scalable Situated Multi-Agent Task Allocation) GUI"
   private val boardSquares = Array.ofDim[Label](environment.height, environment.width)
-  // North
+  // North : button
   private val toolPanel = new BoxPanel(Orientation.Horizontal) {
-      contents += Button("New"){ environment.init() }
-      contents += Button("Exit"){ sys.exit(0) }
-      for (e <- contents) e.xLayoutAlignment = 0.0
-      border = Swing.EmptyBorder(10, 10, 10, 10)
+    contents += Button("New"){
+      environment.reinit()
     }
-  // Center
+    contents += Button("Run"){
+      executor.run() foreach {case (body, step) => println (body + "-->" + step)}
+    }
+    contents += Button("Exit"){
+      sys.exit(0)
+    }
+    for (e <- contents) e.xLayoutAlignment = 0.0
+      border = Swing.EmptyBorder(10, 10, 10, 10)
+  }
+  // Center : grid panel
   private val gridPanel=  new GridPanel(environment.height, environment.height) {
     background = Color.WHITE
   }
-  // Draw gridPanel
+  // Draw grid panel
   for (i <- 0 until environment.height; j <- 0 until environment.width) {
     boardSquares(i)(j) = environment.get(i,j).label()
     boardSquares(i)(j).listenTo(environment.get(i,j))
@@ -39,7 +47,7 @@ class UI(val environment: Environment) extends MainFrame {
   }
   // Main panel
   contents = new BorderPanel {
-    layout(toolPanel) = North
-    layout(gridPanel) = Center
+    layout(toolPanel) = scala.swing.BorderPanel.Position.North
+    layout(gridPanel) = scala.swing.BorderPanel.Position.Center
   }
 }

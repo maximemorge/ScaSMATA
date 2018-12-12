@@ -2,7 +2,7 @@
 package org.scasmata.environment
 
 /**
-  * Entity in the environment
+  * Entity in the environment are bodies, packets, collection point or nothing (if the cell is empty)
   */
 abstract class Entity
 case object NoEntity

@@ -7,10 +7,12 @@ import scala.swing.{Label, Publisher}
 import scala.swing.event.ValueChanged
 
 /**
-  * Class representing a cell of the environment
-  * @param content
+  * Class representing a cell of the environment which publish the modification
+  * @param i the row
+  * @param j the column
   */
 class Cell(i: Int, j : Int) extends Publisher{
+
   var content : Entity = NoEntity
 
   /**
@@ -28,12 +30,13 @@ class Cell(i: Int, j : Int) extends Publisher{
         "nothing"
     }) + ".png"
     val url = getClass.getResource(path)
+    //In order to resize the image
     val image = new ImageIcon(new ImageIcon(url).getImage.getScaledInstance(100, 100, Image.SCALE_SMOOTH))
     new Label{ icon = image }
   }
 
   /**
-    * Change the content of the cell
+    * Change the content of the cell and publish it
     * @param entity inside the cell
     */
   def setContent(entity: Entity) : Unit  = {
