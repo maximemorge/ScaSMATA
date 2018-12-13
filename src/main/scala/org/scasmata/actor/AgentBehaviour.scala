@@ -1,10 +1,12 @@
 // Copyright (C) Maxime MORGE 2018
 package org.scasmata.actor
 
+import java.time.chrono.MinguoDate
+
 import akka.actor.{Actor, ActorRef, FSM, Stash}
 
 import scala.language.postfixOps
-import org.scasmata.environment.Environment
+import org.scasmata.environment.{Center, Environment}
 
 /**
   * States of the agent
@@ -13,15 +15,17 @@ sealed trait State
 case object Initial extends State
 
 /**
-  * TODO Internal immutable state of mind
+  * Internal immutable state of mind
+  * @param e its perception
+  * @param load  packet id it bear, 0 otherwise
   */
-class Perception(height : Int, width : Int) extends Environment(height, width)
+class Mind(val e: Environment, val load : Int)
 
 /**
   * Agent behaviour
    * @param id of the body
   */
-class AgentBehaviour(id : Int) extends Actor with FSM[State, Environment] with Stash {
+class AgentBehaviour(id : Int) extends Actor with FSM[State, Mind] with Stash with ZI{
   val debug = true
 
   var scheduler: ActorRef = context.parent
@@ -30,7 +34,7 @@ class AgentBehaviour(id : Int) extends Actor with FSM[State, Environment] with S
   /**
     * Initiates a myopic agent
     */
-  startWith(Initial, null)
+  startWith(Initial,  new Mind(null, 0))
 
 
   /**
@@ -38,12 +42,28 @@ class AgentBehaviour(id : Int) extends Actor with FSM[State, Environment] with S
     */
   when(Initial) {
     // If the perception is updated
-    case Event(Update(env), mind) =>
+    case Event(Update(e), mind) =>
       if (debug) println(s"Agent$id : it is updated about the environment")
-      // TODO Decide
-      if (debug) println(s"Agent$id : it decides to stop")
-      sender ! Finished(0)
-      stay using env
+      val newMind = new Mind(e, mind.load)
+      val nextInfluence = decide(newMind.e, id, newMind.load)
+      if (debug) println(s"Agent$id : it decides to stay")
+      sender ! nextInfluence
+      stay using newMind
+
+    case Event(Success, mind) =>
+      if (debug) println(s"Agent$id : last influence failed")
+      //if (debug) println(s"Agent$id : it decides to stop")
+      //sender ! Finished(0)
+      if (debug) println(s"Agent$id : it observes")
+      sender ! Observe
+      stay using mind
+
+    case Event(Failure, mind) =>
+      if (debug) println(s"Agent$id : last influence successful")
+      if (debug) println(s"Agent$id : it observes")
+      sender ! Observe
+      stay using mind
+
   }
 
   /**
@@ -51,8 +71,9 @@ class AgentBehaviour(id : Int) extends Actor with FSM[State, Environment] with S
     */
   whenUnhandled {
     // If the agent is initiated with the directory
-    case Event(Init(directory), mind) =>
+    case Event(Init(d), mind) =>
       this.scheduler = sender
+      this.directory = d
       if (debug) println(s"Agent$id : it is ready")
       sender ! Ready
       stay using mind

@@ -12,7 +12,7 @@ import scala.swing.event.ValueChanged
   * @param j the column
   */
 class Cell(i: Int, j : Int) extends Publisher{
-  val debug = true
+  val debug = false
   var content : Entity = NoEntity
 
   /**
@@ -20,10 +20,11 @@ class Cell(i: Int, j : Int) extends Publisher{
     */
   def label() : Label = {
     val path = (content match {
-      case CollectionPoint(color) =>
+      case Destination(color) =>
         color+"Place"
-      case AgentBody(id) =>
-        "fig"+id.toString
+      case AgentBody(id,load) =>
+        if (load == 0) "fig"+id.toString
+        else  "fig"+id.toString+"red"
       case Packet(_,color,size) =>
         color+size.toString
       case NoEntity =>
@@ -46,4 +47,24 @@ class Cell(i: Int, j : Int) extends Publisher{
       publish(new ValueChanged(label()))
     }
   }
+
+  /**
+    * Returns true of the cell contains no entity
+    */
+  def isEmpty() : Boolean = content == NoEntity
+
+  /**
+    * Returns true if the cell contains the body with a particular id
+    */
+  def hasBody(id : Int) : Boolean = content.isInstanceOf[AgentBody] && content.asInstanceOf[AgentBody].id == id
+
+  /**
+    * Returns true if the cell contains a packet
+    */
+  def hasPacket() : Boolean = content.isInstanceOf[Packet]
+
+  /**
+    * Returns true if the cell contains a destination
+    */
+  def hasDestination() : Boolean = content.isInstanceOf[Destination]
 }
