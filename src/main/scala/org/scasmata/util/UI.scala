@@ -3,38 +3,29 @@ package org.scasmata.util
 
 import scala.swing._
 import java.awt.Color
-
-import akka.actor.{ActorSystem, Props}
-import akka.util.Timeout
-
 import scala.swing.event.ValueChanged
-import org.scasmata.environment._
-import org.scasmata.actor.{Simulator, Run, Result}
 
-import scala.concurrent.duration.FiniteDuration
-import akka.actor.{Actor, ActorRef, ActorSystem, Props}
-import akka.pattern.ask
-
-import scala.concurrent.Await
+import akka.actor.ActorRef
 import akka.util.Timeout
-
-import scala.concurrent.duration._
 import scala.language.postfixOps
-import scala.concurrent.duration.FiniteDuration
+import scala.concurrent.duration._
+import akka.pattern.ask
+import scala.concurrent.Await
+
+import org.scasmata.environment._
+import org.scasmata.actor.{Next, Outcome, Pause, Play}
 
 /**
   * Class representing the user interface
   * @param e where agent interacts
   */
-class UI(val e: Environment) extends MainFrame {
+class UI(val e: Environment, val simulator: ActorRef) extends MainFrame {
   title = "ScaSMATA (Scalable Situated Multi-Agent Task Allocation) GUI"
-
-  val system = ActorSystem("ScaSMATASolver") //The Actor system
-  val simulator = system.actorOf(Props(classOf[Simulator], e), "Simulator")
 
   val TIMEOUTVALUE : FiniteDuration = 6000 minutes // Default timeout of a run
   implicit val timeout : Timeout = Timeout(TIMEOUTVALUE)
 
+  var isRunning = false
 
   private val boardSquares = Array.ofDim[Label](e.height, e.width)
   // North : button
@@ -42,9 +33,18 @@ class UI(val e: Environment) extends MainFrame {
     contents += Button("New"){
       e.reinit()
     }
-    contents += Button("Run"){
-      val future = simulator ! Run
-      //val result = Await.result(future, timeout.duration).isInstanceOf[Result]
+    contents += Button("Play/Pause") {
+      if (!isRunning) {
+        isRunning = true
+        simulator ! Play
+      } else {
+        isRunning = false
+        simulator ! Pause
+      }
+    }
+
+    contents += Button("Next"){
+      simulator ! Next
     }
     contents += Button("Exit"){
       sys.exit(0)

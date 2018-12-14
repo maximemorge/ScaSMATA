@@ -7,10 +7,9 @@ import org.scasmata.environment.{Environment,Direction,Color}
   * ManagingMessage
   */
 abstract class ManagingMessage
-case object Run extends ManagingMessage
-case class Start(e : Environment) extends ManagingMessage // Start the scheduler
-case object Trigger extends ManagingMessage // Trigger agent
-case object Stop extends ManagingMessage // Stop scheduler/agent
+case object Play extends ManagingMessage
+case object Pause extends ManagingMessage
+case object Next extends ManagingMessage
 case class Init(d: Directory) extends ManagingMessage // Provide directory to agents
 case object QueryResult extends ManagingMessage
 case class Result(steps: Int) extends ManagingMessage // Agent stops after a number of steps

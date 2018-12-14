@@ -7,13 +7,14 @@ import scala.swing.{Label, Publisher}
 import scala.swing.event.ValueChanged
 
 /**
-  * Class representing a cell of the environment which publish the modification
+  * Class representing a cell of the environment
   * @param i the row
   * @param j the column
   */
-class Cell(i: Int, j : Int) extends Publisher{
+class Cell(i: Int, j : Int)extends Publisher{
   val debug = false
   var content : Entity = NoEntity
+  override def toString: String = s"|$content|"
 
   /**
     * Returns the cell representation within a label with an icon
@@ -30,7 +31,7 @@ class Cell(i: Int, j : Int) extends Publisher{
       case NoEntity =>
         "nothing"
     }) + ".png"
-    if (debug) println(path)
+    if (debug) println(s"Show image $path")
     val url = getClass.getResource(path)
     //In order to resize the image
     val image = new ImageIcon(new ImageIcon(url).getImage.getScaledInstance(100, 100, Image.SCALE_SMOOTH))
@@ -38,8 +39,7 @@ class Cell(i: Int, j : Int) extends Publisher{
   }
 
   /**
-    * Change the content of the cell and publish it
-    * @param entity inside the cell
+    * Change the content of the cell if required and publish it
     */
   def setContent(entity: Entity) : Unit  = {
     if (entity != content){
@@ -49,9 +49,10 @@ class Cell(i: Int, j : Int) extends Publisher{
   }
 
   /**
-    * Returns true of the cell contains no entity
+    *
+    *  Returns true of the cell contains no entity
     */
-  def isEmpty() : Boolean = content == NoEntity
+  def isEmpty : Boolean = content == NoEntity
 
   /**
     * Returns true if the cell contains the body with a particular id
@@ -61,10 +62,10 @@ class Cell(i: Int, j : Int) extends Publisher{
   /**
     * Returns true if the cell contains a packet
     */
-  def hasPacket() : Boolean = content.isInstanceOf[Packet]
+  def hasPacket : Boolean = content.isInstanceOf[Packet]
 
   /**
     * Returns true if the cell contains a destination
     */
-  def hasDestination() : Boolean = content.isInstanceOf[Destination]
+  def hasDestination : Boolean = content.isInstanceOf[Destination]
 }

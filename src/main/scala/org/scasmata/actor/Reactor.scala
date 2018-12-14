@@ -1,10 +1,8 @@
 // Copyright (C) Maxime MORGE 2018
 package org.scasmata.actor
 
-import akka.actor.{Actor, ActorRef, FSM, Props}
-import org.scasmata.environment.{AgentBody, Center, East, Environment, North, South, West}
-
-import scala.concurrent.Await
+import akka.actor.Actor
+import org.scasmata.environment.Environment
 
 /**
   * Reactor calculates, according to a set of domain specific laws,
@@ -13,56 +11,62 @@ import scala.concurrent.Await
 trait Reactor extends Actor {
   val debug = true
 
-  def react(influences: Map[AgentBody,Influence], e : Environment, wP : Directory) : Unit = {
+  /**
+    * Process each influence according to the physical laws of the environment
+    * @param influences
+    * @param e
+    * @param directory
+    */
+  def react(influences: Map[Int,Influence], e : Environment, directory : Directory) : Unit = {
     influences.map{
-      case (body,Move(d)) =>
-        if (!e.isPossibleDirection(body.id,d)){
-          if (debug) println(s"Move($d) of $body is impossible")
-          wP.adr(body) ! Failure
+
+      case (bodyId,Move(direction)) =>
+        if (!e.isPossibleDirection(bodyId,direction)){
+          if (debug) println(s"Move($direction) of $bodyId is impossible")
+          directory.adr(bodyId) ! Failure
         }
         else{
-          e.updateMove(body.id,d)
-          if (debug) println(s"Move($d) of $body is performed")
-          wP.adr(body) ! Success
+          e.updateMove(bodyId,direction)
+          if (debug) println(s"Move($direction) of $bodyId is performed")
+          directory.adr(bodyId) ! Success
         }
 
-      case (body,PickUp(id)) =>
-        val listOfPacket = e.closedPackets(body.id)
-        if (e.load(body.id)==0 || listOfPacket.isEmpty) {
-          if (debug) println(s"Pickup($id) of $body is failed")
-          wP.adr(body) ! Failure
+      case (bodyId,PickUp(id)) =>
+        val listOfPacket = e.closedPackets(bodyId)
+        if (e.load(bodyId) != 0 || listOfPacket.isEmpty) {
+          if (debug) println(s"Pickup($id) of $bodyId is failed")
+          directory.adr(bodyId) ! Failure
         }
         else {
-          val packetId = listOfPacket.head
-          e.updatePickUp(body.id,packetId)
-          if (debug) println(s"Pickup($id) of $body is performed")
-          wP.adr(body) ! Success
+          val idPacket = listOfPacket.head
+          e.updatePickUp(bodyId,idPacket)
+          if (debug) println(s"Pickup($idPacket) of $bodyId is performed")
+          directory.adr(bodyId) ! Success
         }
 
-      case (body, PutDown(idPacket,color)) =>
-        val listOfDestination = e.closedDestinations(body.id,color)
-        if (e.load(body.id)==0 || listOfDestination.isEmpty) {
-          if (debug) println(s"PutDown($idPacket,$color) of $body is failed")
-          wP.adr(body) ! Failure
+      case (bodyId, PutDown(idPacket,color)) =>
+        val listOfDestination = e.closedDestinations(bodyId,color)
+        if (e.load(bodyId)==0 || listOfDestination.isEmpty) {
+          if (debug) println(s"PutDown($idPacket,$color) of $bodyId is failed")
+          directory.adr(bodyId) ! Failure
         }
         else {
-          val packetId = listOfDestination.head
-          e.updatePutDown(body.id,idPacket)
-          if (debug) println(s"PutDown($idPacket) of $body is performed")
-          wP.adr(body) ! Success
-          if (e.nbAvailablePackets == 0){
+          e.updatePutDown(bodyId,idPacket)
+          if (debug) println(s"PutDown($idPacket) of $bodyId is performed")
+          directory.adr(bodyId) ! Success
+          if (e.nbScatteredPackets == 0){
             if (debug) println(s"No more packets")
-            stopAll(wP)
+            stopAll(directory)
           }
           if (debug) println(s"There is still packets")
         }
-      case (body,influence) =>
-        new RuntimeException(s"Reactor: $influence by ${body.id} was not excepted")
+      case (bodyId,influence) =>
+        new RuntimeException(s"Reactor: $influence by $bodyId was not excepted")
     }
   }
 
   def stopAll(wP : Directory) = {
-    wP.allActors().foreach( _ ! QueryResult)
+    wP.allAgents().foreach( _ ! QueryResult)
   }
 
 }

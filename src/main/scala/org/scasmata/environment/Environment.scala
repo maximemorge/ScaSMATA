@@ -1,11 +1,7 @@
 // Copyright (C) Maxime MORGE 2018
 package org.scasmata.environment
 
-import java.lang
-
-import scala.util.Random
 import scala.collection.mutable.ListBuffer
-import scala.swing.Publisher
 import scala.util.Random
 
 /**
@@ -14,12 +10,13 @@ import scala.util.Random
   * @param width of the environment
   */
 class Environment(val height: Int, val width: Int,
-                  val nbDestionations : Int = 1, val nbAgentBodies  : Int = 1, val nbPackets : Int = 1, val maxSizePackets : Int= 1){
+                  val nbDestionations : Int = 1, val nbAgentBodies  : Int = 1,
+                  val nbPackets : Int = 1, val maxSizePackets : Int= 1){
   val debug = false
 
   val colorPackets = Red
   val colorDestination = Red
-  var nbAvailablePackets = nbPackets
+  var nbScatteredPackets = nbPackets
 
   //Create the grid
   private val grid = Array.ofDim[Cell](height, width)
@@ -41,15 +38,15 @@ class Environment(val height: Int, val width: Int,
     */
   def init() : Unit = {
     val random = new Random
-    var idAgent = 0
+    var idBody = 0
     var idPacket = 0
     var coordinates = ListBuffer[(Int,Int)]()
     for (j <- 0 until width; i <- 0 until height) coordinates += ((i,j))
     for (k <- 0 until nbAgentBodies) {
-      idAgent += 1
+      idBody += 1
       val (i, j) = coordinates.remove(random.nextInt(coordinates.length))
       if (debug) println(s"Add body in ($i, $j)")
-      grid(i)(j).setContent(AgentBody(id = idAgent))
+      grid(i)(j).setContent(AgentBody(id = idBody))
     }
     for (k <- 0 until nbPackets) {
       idPacket += 1
@@ -80,22 +77,35 @@ class Environment(val height: Int, val width: Int,
 
 
   /**
-    * Returns true if the cell (i,j) is empty
+    * Returns a string representation of the environment
     */
-  def isEmpty(i: Int, j: Int):  Boolean =  get(i,j).isEmpty()
+  override def toString: String = {
+    var s =""
+    for (i <- 0 until height){
+      for(j <- 0 until width){
+        s+=get(i,j)+toString
+      }
+      s+"\n"
+    }
+    s
+  }
 
   /**
-    * Returns the list of agent bodies
+    * Returns true if the cell (i,j) is empty
     */
-  def bodies() : Iterable[AgentBody] = {
+  def isEmpty(i: Int, j: Int):  Boolean =  get(i,j).isEmpty
+
+  /**
+    * Returns the list of bodyIds
+    */
+  def bodyIds() : Iterable[Int] = {
     (for (j <- 0 until width; i <- 0 until height) yield {
       grid(i)(j).content match {
-        case AgentBody(id,load) => Some(AgentBody(id,load))
+        case AgentBody(id,_) => Some(id)
         case _ => None
       }
     }).toIterable.filter(_.isDefined).map(_.get)
   }
-
 
   /**
     * Returns the coordinates of the body
@@ -103,7 +113,7 @@ class Environment(val height: Int, val width: Int,
   def bodyLocation(bodyId: Int): (Int,Int) = {
     for (j <- 0 until width; i <- 0 until height){
       if ( grid(i)(j).content.isInstanceOf[AgentBody] && grid(i)(j).content.asInstanceOf[AgentBody].id == bodyId)
-        return (i,i)
+        return (i,j)
     }
     new RuntimeException(s"Body $bodyId is not in the environment")
     (-1,-1)
@@ -121,7 +131,6 @@ class Environment(val height: Int, val width: Int,
     (-1,-1)
   }
 
-
   /**
     * Returns the neigborhood of a cell
     */
@@ -132,7 +141,7 @@ class Environment(val height: Int, val width: Int,
     if (i>0 && j>0) n :+= get(i-1,j-1)
     if (i< height-1) n :+=  get(i+1,j)
     if (j< width-1) n :+=  get(i,j+1)
-    if (i< width-1 && j< height-1) n :+=  get(i+1,j+1)
+    if (j< width-1 && i< height-1) n :+=  get(i+1,j+1)
     n
   }
 
@@ -163,7 +172,7 @@ class Environment(val height: Int, val width: Int,
   }
 
   /**
-    * Update the environment with a move
+    * Updates the environment with a move
     */
   def updateMove(bodyId: Int, d: Direction) = {
     val (i,j) = bodyLocation(bodyId)
@@ -171,58 +180,58 @@ class Environment(val height: Int, val width: Int,
       new RuntimeException(s"Move to $d from ($i,$j) is impossible")
     val entity = grid(i)(j).content
     grid(i)(j).setContent(NoEntity)
-    d match {
-      case East => grid(i)(j-1).setContent(entity)
-      case North => grid(i-1)(j).setContent(entity)
-      case West => grid(i)(j+1).setContent(entity)
-      case South => grid(i+1)(j).setContent(entity)
-      case Center => grid(i)(j).setContent(entity)
+    val (k,l) = d match {
+      case East => (i,j+1)
+      case North => (i-1,j)
+      case West => (i,j-1)
+      case South => (i+1,j)
+      case Center => (i,j)
     }
+    grid(k)(l).setContent(entity)
   }
 
   /**
-    * Update the environment when a body pick up the environment
+    * Updates the environment when a body pick up the environment
     */
   def updatePickUp(bodyId : Int, packetId: Int) = {
     val (i,j) = bodyLocation(bodyId)
     val (x,y) = packetLocation(packetId)
-    grid(x)(y).setContent(NoEntity)
-    grid(i)(j).setContent(AgentBody(bodyId, packetId))
+    grid(x)(y).content = NoEntity
+    grid(i)(j).content = AgentBody(bodyId, packetId)
   }
 
   /**
-    * Update the environment when a body pick up the environment
+    * Updates the environment when a body pick up the environment
     */
   def updatePutDown(bodyId : Int, packetId: Int) = {
     val (i,j) = bodyLocation(bodyId)
-    nbAvailablePackets -= 1
-    grid(i)(j).setContent(AgentBody(bodyId, 0))
+    nbScatteredPackets -= 1
+    grid(i)(j).content = AgentBody(bodyId, 0)
   }
 
 
-
   /**
-    * Returns if a packet is closed to the body
+    * Returns true if a packet is closed to the body
     */
   def closedPacket(bodyId: Int) : Boolean = {
     val (i, j) = bodyLocation(bodyId)
-    neighborhood(i, j).exists(c => c.hasPacket())
+    neighborhood(i, j).exists(c => c.hasPacket)
   }
 
   /**
-    * Returns the list of packet ids closed to the body
+    * Returns the list of packetIds closed to the bodyId
     */
   def closedPackets(bodyId: Int) : Seq[Int] = {
     var l = Seq[Int]()
     val (i, j) = bodyLocation(bodyId)
     neighborhood(i, j).foreach { c =>
-      if (c.content.isInstanceOf[Packet])  l :+= c.content.asInstanceOf[Packet].id
+      if (c.hasPacket)  l :+= c.content.asInstanceOf[Packet].id
     }
     l
   }
 
   /**
-    * Returns the list of destination closed to the body
+    * Returns the list of destinations closed to the bodyId
     */
   def closedDestinations(bodyId: Int, color: Color) : Seq[Destination] = {
     var l = Seq[Destination]()
@@ -235,7 +244,7 @@ class Environment(val height: Int, val width: Int,
   }
 
   /**
-    * Returns the load of a body
+    * Returns the load of a bodyId
     */
   def load(bodyId : Int) = {
     val (i,j) = bodyLocation(bodyId)

@@ -2,6 +2,7 @@
 package org.scasmata.actor
 
 import org.scasmata.environment.{AgentBody, Environment}
+import org.scasmata.util.UI
 
 import scala.concurrent.duration.FiniteDuration
 import akka.actor.{Actor, ActorRef, ActorSystem, Props}
@@ -11,9 +12,8 @@ import akka.util.Timeout
 import scala.concurrent.duration._
 import scala.language.postfixOps
 
-
 /**
-  * Scheduler which :
+  * Simulator which :
   * - synchronizes the influences
   * - computes the reactions
   * - updates the environment
@@ -22,71 +22,92 @@ import scala.language.postfixOps
 class Simulator(val e: Environment) extends Actor with Reactor {
   override val debug = true
 
-  var runner = context.parent
+  val TIMEOUTVALUE: FiniteDuration = 6000 minutes // Default timeout of a run
+  implicit val timeout: Timeout = Timeout(TIMEOUTVALUE)
 
-  val TIMEOUTVALUE : FiniteDuration = 6000 minutes // Default timeout of a run
-  implicit val timeout : Timeout = Timeout(TIMEOUTVALUE)
-
-  var directory = new Directory() // White page for body/actors
-  var nbReady = 0 // Number of agents which are ready to talk to each other
-  var nbFinished = 0
+  var runner = context.parent // The actor which triggers the simulation and gathers the steps
+  var pause = false
+  var directory = new Directory() // White page for bodyId/ActorRef
+  var nbReadyAgent = 0 // Number of agents which are ready to talk to each other
+  var nbStoppedAgents = 0
   var step = 0 // Number of simulation steps
-  var steps = Map[Int,Int]() // Number of steps performed by the agents
-
-  var influences = Map[AgentBody,Influence]()
-
-
-  //Start
-  e.bodies().foreach{ body : AgentBody => //For all bodies
-    if (debug) println(s"Simulatore: it creates an agent for body ${body.id}")
-    val actor = context.actorOf(Props(classOf[AgentBehaviour], body.id), body.id.toString)
-    directory.add(body, actor) // Add it to the directory
-  }
-  if (debug) println(s"Scheduler: it initiates all agents")
-  directory.allActors().foreach{ a =>
-    val future = a ? Init(directory)
-    Await.result(future, timeout.duration) == Ready
-  }
+  var steps = Map[Int, Int]() // Number of steps performed by the agents
+  var influences = Map[Int, Influence]()
 
 
+
+  /**
+    * Start simulator
+    */
+  //override def preStart(): Unit = {
+    // Creation of the agents and directory update
+    e.bodyIds().foreach { bodyId =>
+      if (debug) println(s"Simulator creates an agent for body $bodyId")
+      val actor = context.actorOf(Props(classOf[Agent], bodyId), bodyId.toString)
+      directory.add(bodyId, actor) // Add it to the directory
+    }
+    // Initiation of the agents with the directory
+    if (debug) println(s"Simulator initiates all agents")
+    directory.allAgents().foreach { a =>
+      val future = a ? Init(directory)
+      Await.result(future, timeout.duration) == Ready
+      if (debug) println("Simulator receives ready")
+    }
+  //}
+
+  /**
+    * Message handling
+    */
   override def receive: Receive = {
-    //When the simulator is start
-    case Run =>
+    //When the simulator plays
+    case Play =>
       runner = sender
-      if (debug) println("Start Simulator")
-      directory.allActors().foreach { actor: ActorRef => //Trigger them
-        if (debug) println(s"Scheduler: it first updates ${directory.bodies(actor)}")
+      if (debug) println("Simulator runs")
+      directory.allAgents().foreach { actor: ActorRef => //Trigger them
         actor ! Update(e)
       }
-      if (debug) println("End SingleExecutor")
-
-    //When an agent is finished
-    case Result(step) =>
-      val body = directory.bodies(sender)
-      steps += (body.id -> step)
-      nbFinished += 1
-      if (nbFinished == e.nbAgentBodies) {
-        // When all of them have finished
-        directory.allActors().foreach { actor: ActorRef => //Stop them
-          if (debug) println(s"Scheduler: it stops ${directory.bodies(actor)}")
-          actor ! Stop
+      if (pause){
+        pause = false
+        if (influences.keys.size  == e.nbAgentBodies) {
+          react(influences, e, directory)
         }
+      }
+
+    //When the simulator is paused
+    case Pause =>
+      if (debug) println("Simulator pauses")
+      pause = true
+
+    //When the simulator performs the next step
+    case Next =>
+      if (pause){
+        if (influences.keys.size  == e.nbAgentBodies) {
+          react(influences, e, directory)
+        }
+      }
+
+    //When the simulator is informed about the number of step of an agent
+    case Result(step) =>
+      val bodyId = directory.id(sender)
+      steps += (bodyId -> step)
+      nbStoppedAgents += 1
+      if (nbStoppedAgents == e.nbAgentBodies) {
         runner ! Outcome(steps)
-        context.stop(self) // Stop the scheduler
+        context.stop(self)
       }
 
     //When an actor observe the environment
     case Observe =>
-      val body = directory.bodies(sender)
-      if (debug) println(s"Scheduler: it updates $body")
+      val bodyId = directory.id(sender)
+      if (debug) println(s"Simulator updates $bodyId")
       sender ! Update(e)
 
     // When an agent wants to act
     case influence: Influence =>
-      val body = directory.bodies(sender)
-      if (debug) println(s"Scheduler: $body wants to $influence")
-      influences = influences + (body -> influence)
-      if (influences.keys.size == e.nbAgentBodies){ // Compute reaction
+      val bodyId = directory.id(sender)
+      if (debug) println(s"Simulator receives $influence from $bodyId")
+      influences = influences + (bodyId -> influence)
+      if (influences.keys.size == e.nbAgentBodies && !pause){ // Compute reaction
         if (debug) println(s"Simulator: it computes the reactions")
         react(influences, e, directory)
         step += 1

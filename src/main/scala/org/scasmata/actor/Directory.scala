@@ -2,33 +2,30 @@
 package org.scasmata.actor
 
 import akka.actor.ActorRef
-import org.scasmata.environment.AgentBody
 
 /**
   * Class representing an index of the names and addresses of agents
   */
 class Directory {
-  var adr = Map[AgentBody, ActorRef]()//Bodies' references
-  var bodies = Map[ActorRef, AgentBody]()// Actors' body
+  var adr = Map[Int, ActorRef]()//Bodies' references
+  var id = Map[ActorRef, Int]()// Actors' body
 
-  override def toString: String = allBodies().mkString("[",", ","]")
+  override def toString: String = allIds().mkString("[",", ","]")
 
   /**
-    * Add to the directory
-    * @param body
-    * @param ref
+    * Add to the directory a (bodyId,ref)
     */
-  def add(body: AgentBody, ref: ActorRef) : Unit = {
-    if ( ! adr.keySet.contains(body) &&  ! bodies.keySet.contains(ref)) {
-      adr += (body -> ref)
-      bodies += (ref -> body)
+  def add(bodyId: Int, ref: ActorRef) : Unit = {
+    if ( ! adr.keySet.contains(bodyId) &&  ! id.keySet.contains(ref)) {
+      adr += (bodyId -> ref)
+      id += (ref -> bodyId)
     }
-    else throw new RuntimeException(s"$body and/or $ref already in the directory")
+    else throw new RuntimeException(s"$bodyId and/or $ref already in the directory")
   }
 
-  def allActors() : Iterable[ActorRef]  = adr.values
-  def allBodies() : Iterable[AgentBody]  = bodies.values
-  def peers(worker: AgentBody) : Set[AgentBody] = allBodies().filterNot(_ ==worker).toSet
-  def peersActor(worker: AgentBody) :  Iterable[ActorRef] = peers(worker: AgentBody).map(w => adr(w))
+  def allAgents() : Iterable[ActorRef]  = adr.values
+  def allIds() : Iterable[Int]  = id.values
+  def peers(bodyId: Int) : Set[Int] = allIds().filterNot(_ == bodyId).toSet
+  def peersActor(bodyId: Int) :  Iterable[ActorRef] = peers(bodyId).map(id => adr(id))
 
 }
