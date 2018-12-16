@@ -24,7 +24,8 @@ class Simulator(val e: Environment) extends Actor with Reactor {
 
   val TIMEOUTVALUE: FiniteDuration = 1 seconds // Default timeout of step
   implicit val timeout: Timeout = Timeout(TIMEOUTVALUE)
-  val pause : Int = 250 // Waiting time before a reaction
+  val delay : Int = 250 // Waiting time before a reaction
+  var pause = false
 
   var runner = context.parent // The actor which triggers the simulation and gathers the steps
   var directory = new Directory() // White page for bodyId/ActorRef
@@ -65,6 +66,19 @@ class Simulator(val e: Environment) extends Actor with Reactor {
         actor ! Update(e)
       }
 
+    case Pause =>
+      pause = true
+
+    case Replay =>
+      pause = false
+      if (influences.keys.size == e.nbAgentBodies){ // Compute reaction
+        val timer = context.actorOf(Props(classOf[Timer],delay), "timer")
+        timer ! Wait
+      }else {// Otherwise wait for other actions
+        if (debug) println(s"Simulator: it waits for other influences")
+      }
+
+
     //When the simulator is informed about the number of step of an agent
     case Result(step) =>
       val bodyId = directory.id(sender)
@@ -86,12 +100,11 @@ class Simulator(val e: Environment) extends Actor with Reactor {
       val bodyId = directory.id(sender)
       if (debug) println(s"Simulator receives $influence from $bodyId")
       influences = influences + (bodyId -> influence)
-      if (influences.keys.size == e.nbAgentBodies){ // Compute reaction
-        val timer = context.actorOf(Props(classOf[Timer],pause), "timer")
+      if (influences.keys.size == e.nbAgentBodies &&  !pause){ // Compute reaction
+        val timer = context.actorOf(Props(classOf[Timer],delay), "timer")
         timer ! Wait
-      }else {
-        // Otherwise wait for other actions
-        if (debug) println(s"Simulator: it waits for other influences")
+      }else {// Otherwise wait for other actions
+        if (debug) println(s"Simulator: it waits for other influences or replay")
       }
 
     // When the timeout for the reaction is received

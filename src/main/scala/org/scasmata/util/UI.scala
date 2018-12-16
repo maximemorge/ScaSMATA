@@ -13,7 +13,7 @@ import akka.pattern.ask
 import scala.concurrent.Await
 
 import org.scasmata.environment._
-import org.scasmata.actor.{Next, Outcome, Pause, Play}
+import org.scasmata.actor.{Pause, Play, Replay}
 
 /**
   * Class representing the user interface
@@ -25,7 +25,7 @@ class UI(val e: Environment, val simulator: ActorRef) extends MainFrame {
   val TIMEOUTVALUE : FiniteDuration = 6000 minutes // Default timeout of a run
   implicit val timeout : Timeout = Timeout(TIMEOUTVALUE)
 
-  var isRunning = false
+  var isRunning = 0 // 0 if never played, 1 if pause, 2 if replayed
 
   private val boardSquares = Array.ofDim[Label](e.height, e.width)
   // North : button
@@ -33,13 +33,17 @@ class UI(val e: Environment, val simulator: ActorRef) extends MainFrame {
     contents += Button("New"){
       e.reinit()
     }
-    contents += Button("Play") {
-      if (!isRunning) {
-        isRunning = true
-        simulator ! Play
-      } else {
-        isRunning = false
-        simulator ! Pause
+    contents += Button("Play/Pause") {
+      isRunning match {
+        case 0 =>
+          isRunning = 1
+          simulator ! Play
+        case 1 =>
+          isRunning = 2
+          simulator ! Pause
+        case 2 =>
+          isRunning = 1
+          simulator ! Replay
       }
     }
 
