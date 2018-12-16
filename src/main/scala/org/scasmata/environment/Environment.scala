@@ -111,9 +111,11 @@ class Environment(val height: Int, val width: Int,
     * Returns the coordinates of the body
     */
   def bodyLocation(bodyId: Int): (Int,Int) = {
-    for (j <- 0 until width; i <- 0 until height){
-      if ( grid(i)(j).content.isInstanceOf[AgentBody] && grid(i)(j).content.asInstanceOf[AgentBody].id == bodyId)
-        return (i,j)
+    for (j <- 0 until width; i <- 0 until height) {
+      grid(i)(j).content match {
+        case AgentBody(id, _) if bodyId == id => return (i, j)
+        case _ =>
+      }
     }
     new RuntimeException(s"Body $bodyId is not in the environment")
     (-1,-1)
@@ -124,8 +126,10 @@ class Environment(val height: Int, val width: Int,
     */
   def packetLocation(packetId: Int): (Int,Int) = {
     for (j <- 0 until width; i <- 0 until height){
-      if ( grid(i)(j).content.isInstanceOf[Packet] && grid(i)(j).content.asInstanceOf[Packet].id == packetId)
-        return (i,i)
+      grid(i)(j).content match {
+        case Packet(id,_,_) if packetId == id => return (i,j)
+        case _ =>
+      }
     }
     new RuntimeException(s"Packet $packetId is not in the environment")
     (-1,-1)
@@ -196,8 +200,8 @@ class Environment(val height: Int, val width: Int,
   def updatePickUp(bodyId : Int, packetId: Int) = {
     val (i,j) = bodyLocation(bodyId)
     val (x,y) = packetLocation(packetId)
-    grid(x)(y).content = NoEntity
-    grid(i)(j).content = AgentBody(bodyId, packetId)
+    grid(x)(y).setContent(NoEntity)
+    grid(i)(j).setContent(AgentBody(bodyId, packetId))
   }
 
   /**
@@ -206,7 +210,7 @@ class Environment(val height: Int, val width: Int,
   def updatePutDown(bodyId : Int, packetId: Int) = {
     val (i,j) = bodyLocation(bodyId)
     nbScatteredPackets -= 1
-    grid(i)(j).content = AgentBody(bodyId, 0)
+    grid(i)(j).setContent(AgentBody(bodyId))
   }
 
 
