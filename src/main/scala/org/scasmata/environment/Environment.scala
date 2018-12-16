@@ -32,6 +32,7 @@ class Environment(val height: Int, val width: Int,
   def reset() : Unit = {
     for (i <- 0 until height; j <- 0 until width)
       grid(i)(j).setContent(NoEntity)
+    nbScatteredPackets = nbPackets
   }
   /**
     * Initiate a random environment

@@ -20,7 +20,7 @@ object MainWithoutUI{
     implicit val timeout : Timeout = Timeout(TIMEOUTVALUE)
     val e = new Environment(height = 4, width = 8)
     val system = ActorSystem("ScaSMATASolver") //The Actor system
-    val simulator = system.actorOf(Props(classOf[Simulator], e), "Simulator")
+    val simulator = system.actorOf(Props(classOf[Simulator], e, 0), "Simulator")
     val future = simulator ? Play
     val result = Await.result(future, timeout.duration).asInstanceOf[Outcome]
     result.steps.foreach{ case (bodyId,step) =>

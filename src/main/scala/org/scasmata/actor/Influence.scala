@@ -10,6 +10,8 @@ abstract class ManagingMessage
 case object Play extends ManagingMessage
 case object Pause extends ManagingMessage
 case object Replay extends ManagingMessage
+case object Next extends ManagingMessage
+case object Kill extends ManagingMessage
 case class Init(d: Directory) extends ManagingMessage // Provide directory to agents
 case object QueryResult extends ManagingMessage
 case class Result(steps: Int) extends ManagingMessage // Agent stops after a number of steps

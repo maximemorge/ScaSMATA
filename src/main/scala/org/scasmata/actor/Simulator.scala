@@ -18,13 +18,13 @@ import scala.language.postfixOps
   * - computes the reactions
   * - updates the environment
   * @param environment current state of the environment
+  * @param delay  waiting time before a reaction
   * */
-class Simulator(val e: Environment) extends Actor with Reactor {
+class Simulator(val e: Environment, val delay : Int = 0) extends Actor with Reactor {
   override val debug = true
 
   val TIMEOUTVALUE: FiniteDuration = 1 seconds // Default timeout of step
   implicit val timeout: Timeout = Timeout(TIMEOUTVALUE)
-  val delay : Int = 250 // Waiting time before a reaction
   var pause = false
 
   var runner = context.parent // The actor which triggers the simulation and gathers the steps
@@ -66,9 +66,11 @@ class Simulator(val e: Environment) extends Actor with Reactor {
         actor ! Update(e)
       }
 
+    //When the simulator is in Pause
     case Pause =>
       pause = true
 
+    //When the simulator replays
     case Replay =>
       pause = false
       if (influences.keys.size == e.nbAgentBodies){ // Compute reaction
@@ -78,6 +80,19 @@ class Simulator(val e: Environment) extends Actor with Reactor {
         if (debug) println(s"Simulator: it waits for other influences")
       }
 
+    //When the simulator play next step
+    case Next =>
+      if (influences.keys.size == e.nbAgentBodies){ // Compute reaction
+        val timer = context.actorOf(Props(classOf[Timer],delay), "timer")
+        timer ! Wait
+      }else {// Otherwise wait for other actions
+        if (debug) println(s"Simulator: it waits for other influences")
+      }
+
+    //When the simulator is killed
+    case Kill =>
+      directory.allAgents.foreach(a => a ! Kill)
+      context.stop(self)
 
     //When the simulator is informed about the number of step of an agent
     case Result(step) =>
@@ -119,4 +134,10 @@ class Simulator(val e: Environment) extends Actor with Reactor {
 
 }
 
-
+object Simulator {
+  var id = 0
+  def nextId() = {
+    id += 1
+    id
+  }
+}
