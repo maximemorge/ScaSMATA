@@ -33,7 +33,7 @@ class UI(val e: Environment, val simulator: ActorRef) extends MainFrame {
     contents += Button("New"){
       e.reinit()
     }
-    contents += Button("Play/Pause") {
+    contents += Button("Play") {
       if (!isRunning) {
         isRunning = true
         simulator ! Play
@@ -43,9 +43,6 @@ class UI(val e: Environment, val simulator: ActorRef) extends MainFrame {
       }
     }
 
-    contents += Button("Next"){
-      simulator ! Next
-    }
     contents += Button("Exit"){
       sys.exit(0)
     }

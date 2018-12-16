@@ -13,7 +13,9 @@ case object Next extends ManagingMessage
 case class Init(d: Directory) extends ManagingMessage // Provide directory to agents
 case object QueryResult extends ManagingMessage
 case class Result(steps: Int) extends ManagingMessage // Agent stops after a number of steps
-case class Outcome(steps: Map[Int,Int]) extends ManagingMessage // Scheduler finished with steps for each agent
+case class Outcome(steps: Map[Int,Int]) extends ManagingMessage // Simulator finished with steps for each agent
+case object Wait extends ManagingMessage // Start timer
+case object Go extends ManagingMessage // Timeout from a timer
 
 /**
   * Message between the scheduler and the agent

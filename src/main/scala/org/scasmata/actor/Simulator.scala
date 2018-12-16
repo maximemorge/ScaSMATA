@@ -22,19 +22,17 @@ import scala.language.postfixOps
 class Simulator(val e: Environment) extends Actor with Reactor {
   override val debug = true
 
-  val TIMEOUTVALUE: FiniteDuration = 6000 minutes // Default timeout of a run
+  val TIMEOUTVALUE: FiniteDuration = 1 seconds // Default timeout of step
   implicit val timeout: Timeout = Timeout(TIMEOUTVALUE)
+  val pause : Int = 250 // Waiting time before a reaction
 
   var runner = context.parent // The actor which triggers the simulation and gathers the steps
-  var pause = false
   var directory = new Directory() // White page for bodyId/ActorRef
   var nbReadyAgent = 0 // Number of agents which are ready to talk to each other
   var nbStoppedAgents = 0
   var step = 0 // Number of simulation steps
   var steps = Map[Int, Int]() // Number of steps performed by the agents
   var influences = Map[Int, Influence]()
-
-
 
   /**
     * Start simulator
@@ -66,25 +64,6 @@ class Simulator(val e: Environment) extends Actor with Reactor {
       directory.allAgents().foreach { actor: ActorRef => //Trigger them
         actor ! Update(e)
       }
-      if (pause){
-        pause = false
-        if (influences.keys.size  == e.nbAgentBodies) {
-          react(influences, e, directory)
-        }
-      }
-
-    //When the simulator is paused
-    case Pause =>
-      if (debug) println("Simulator pauses")
-      pause = true
-
-    //When the simulator performs the next step
-    case Next =>
-      if (pause){
-        if (influences.keys.size  == e.nbAgentBodies) {
-          react(influences, e, directory)
-        }
-      }
 
     //When the simulator is informed about the number of step of an agent
     case Result(step) =>
@@ -107,14 +86,19 @@ class Simulator(val e: Environment) extends Actor with Reactor {
       val bodyId = directory.id(sender)
       if (debug) println(s"Simulator receives $influence from $bodyId")
       influences = influences + (bodyId -> influence)
-      if (influences.keys.size == e.nbAgentBodies && !pause){ // Compute reaction
-        if (debug) println(s"Simulator: it computes the reactions")
-        react(influences, e, directory)
-        step += 1
+      if (influences.keys.size == e.nbAgentBodies){ // Compute reaction
+        val timer = context.actorOf(Props(classOf[Timer],pause), "timer")
+        timer ! Wait
       }else {
         // Otherwise wait for other actions
         if (debug) println(s"Simulator: it waits for other influences")
       }
+
+    // When the timeout for the reaction is received
+    case Go =>
+      if (debug) println(s"Simulator: it computes the reactions")
+      react(influences, e, directory)
+      step += 1
 
     case msg@_ =>
       println("Simulator: it receives a message which was not expected: " + msg)
