@@ -12,9 +12,7 @@ case object Pause extends ManagingMessage
 case object Replay extends ManagingMessage
 case object Next extends ManagingMessage
 case object Kill extends ManagingMessage
-case class Init(d: Directory) extends ManagingMessage // Provide directory to agents
-case object QueryResult extends ManagingMessage
-case class Result(steps: Int) extends ManagingMessage // Agent stops after a number of steps
+case class Init(d: Directory) extends ManagingMessage // Provides directory to agents
 case class Outcome(steps: Map[Int,Int]) extends ManagingMessage // Simulator finished with steps for each agent
 case object Wait extends ManagingMessage // Start timer
 case object Go extends ManagingMessage // Timeout from a timer

@@ -80,14 +80,8 @@ class Agent(id : Int) extends Actor with FSM[State, Mind]
       stay using mind
 
     // If the agent is stopped at the end of the run
-    case Event(QueryResult,mind) =>
-      if (debug) println(s"Agent$id is stopped")
-      sender ! Result(step)
-      context.stop(self)
-      stay using mind
-
-    // If the agent is stopped befor the end of the run
     case Event(Kill,mind) =>
+      if (debug) println(s"Agent$id is stopped")
       context.stop(self)
       stay using mind
 

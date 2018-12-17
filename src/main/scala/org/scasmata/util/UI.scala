@@ -123,8 +123,10 @@ class UI(val e: Environment) extends Actor {
       steps.foreach{
         case(id,nbSteps) => result+=s"Agent$id : $nbSteps steps\n"
       }
+      result+="Max= "+steps.values.max+"\n"
+      result+="Mean= "+steps.values.sum/steps.values.size+"\n"
       Dialog.showMessage(mainFrame,result, title="OK")
-      println("OUTCOME")
+
     case msg@_ =>
       println("Simulator: it receives a message which was not expected: " + msg)
 
