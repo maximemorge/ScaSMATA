@@ -12,11 +12,11 @@ case object Initial extends State
 
 /**
   * Internal immutable state of mind
-  * @param e its perception
+  * @param perception its perception
   * @param load  packetId it owns, 0 otherwise
-  * @param expectedLoad packetId it try to load, 0 otherwise
+  * @param attempt last influence emitted
   */
-class Mind(val e: Environment,val load : Int,val attempt : Influence)
+class Mind(val perception: Environment, val load : Int, val attempt : Influence)
 
 /**
   * Agent behaviour
@@ -55,16 +55,16 @@ class Agent(id : Int) extends Actor with FSM[State, Mind]
       if (debug) println(s"Agent$id observes")
       sender ! Observe
       stay using (mind.attempt match {
-        case PickUp(idPacket) => new Mind(mind.e, idPacket, null)
-        case PutDown(_,_) => new Mind(mind.e, 0, null)
-        case _ => new Mind(mind.e, mind.load, null)
+        case PickUp(idPacket) => new Mind(mind.perception, idPacket, null)
+        case PutDown(_,_) => new Mind(mind.perception, 0, null)
+        case _ => new Mind(mind.perception, mind.load, null)
       })
 
     case Event(Failure, mind) =>
       if (debug) println(s"Agent$id is informed that its previous influence succeed")
       if (debug) println(s"Agent$id observes")
       sender ! Observe
-      stay using new Mind(mind.e, mind.load, null)
+      stay using new Mind(mind.perception, mind.load, null)
   }
 
   /**
