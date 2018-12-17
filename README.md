@@ -21,7 +21,7 @@ world. An agent can pick up a packet and put it down. The job efficiency
 represents the number of steps, packet manipulations and message exchanges. 
 The "heavy packets" must be manipulated simultaneously by at most two agents 
 
-![Snapshot](snapshot.png)(screencast.m4v)
+![Snapshot](snapshot.png)(https://youtu.be/oqLLRXHKjIQ)
 
 ## Requirements
 
