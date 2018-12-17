@@ -11,10 +11,11 @@ import akka.util.Timeout
 import scala.language.postfixOps
 import scala.concurrent.duration._
 import akka.pattern.ask
+import javafx.scene.control.Slider
 
 import scala.concurrent.Await
 import org.scasmata.environment._
-import org.scasmata.actor.{Pause, Play, Replay, Next, Simulator}
+import org.scasmata.actor.{Next, Pause, Play, Replay, Simulator}
 
 /**
   * Class representing the user interface
@@ -22,9 +23,10 @@ import org.scasmata.actor.{Pause, Play, Replay, Next, Simulator}
   */
 class UI(val e: Environment) extends MainFrame {
   title = "ScaSMATA (Scalable Situated Multi-Agent Task Allocation) GUI"
+  var delay = 250 //with 250ms of delay
 
   val system = ActorSystem("ScaSMATASolver") //The Actor system
-  var simulator =  system.actorOf(Props(classOf[Simulator], e, 250), "Simulator"+Simulator.nextId)//Run simulator with 250ms of delay
+  var simulator =  system.actorOf(Props(classOf[Simulator], e, delay), "Simulator"+Simulator.nextId)//Run simulator
 
   val TIMEOUTVALUE : FiniteDuration = 6000 minutes // Default timeout of a run
   implicit val timeout : Timeout = Timeout(TIMEOUTVALUE)
@@ -36,7 +38,7 @@ class UI(val e: Environment) extends MainFrame {
   private val toolPanel = new BoxPanel(Orientation.Horizontal) {
     contents += Button("New"){
       e.reinit()
-      simulator = system.actorOf(Props(classOf[Simulator], e, 250), "Simulator"+Simulator.nextId)//Run simulator with 250ms of delay
+      simulator = system.actorOf(Props(classOf[Simulator], e, delay), "Simulator"+Simulator.nextId)//Run simulator with 250ms of delay
       isRunning = 0
     }
 
@@ -65,6 +67,24 @@ class UI(val e: Environment) extends MainFrame {
     contents += Button("Exit"){
       sys.exit(0)
     }
+
+    val slider = new scala.swing.Slider(){
+      name=delay.toString
+      min = 0
+      max = 1000
+      majorTickSpacing = 100
+      minorTickSpacing = 25
+      paintTicks = true
+      value = delay
+      labels = Map[Int,Label](0 -> new Label("Fast"), 500 -> new Label("Medium"), 1000 -> new Label("Slow"))
+      paintLabels = true
+      reactions += {
+        case ValueChanged(_) => delay=value
+      }
+    }
+    contents += slider
+
+
     for (e <- contents) e.xLayoutAlignment = 0.0
       border = Swing.EmptyBorder(10, 10, 10, 10)
   }
