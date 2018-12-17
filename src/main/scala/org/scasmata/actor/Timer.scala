@@ -32,7 +32,14 @@ class Timer(duration: Int) extends Actor{
   def handleUnexpected: Receive = {
     case msg@_ =>
       new RuntimeException(s"Timer: $msg by $sender was not excepted")
-
   }
+}
 
+
+object Timer {
+  var id = 0
+  def nextId() = {
+    id += 1
+    id
+  }
 }

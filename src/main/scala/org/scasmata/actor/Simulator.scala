@@ -39,19 +39,19 @@ class Simulator(val e: Environment, val delay : Int = 0) extends Actor with Reac
     * Start simulator
     */
   //override def preStart(): Unit = {
-    // Creation of the agents and directory update
-    e.bodyIds().foreach { bodyId =>
-      if (debug) println(s"Simulator creates an agent for body $bodyId")
-      val actor = context.actorOf(Props(classOf[Agent], bodyId), bodyId.toString)
-      directory.add(bodyId, actor) // Add it to the directory
-    }
-    // Initiation of the agents with the directory
-    if (debug) println(s"Simulator initiates all agents")
-    directory.allAgents().foreach { a =>
-      val future = a ? Init(directory)
-      Await.result(future, timeout.duration) == Ready
-      if (debug) println("Simulator receives ready")
-    }
+  // Creation of the agents and directory update
+  e.bodyIds().foreach { bodyId =>
+    if (debug) println(s"Simulator creates an agent for body $bodyId")
+    val actor = context.actorOf(Props(classOf[Agent], bodyId), bodyId.toString)
+    directory.add(bodyId, actor) // Add it to the directory
+  }
+  // Initiation of the agents with the directory
+  if (debug) println(s"Simulator initiates all agents")
+  directory.allAgents().foreach { a =>
+    val future = a ? Init(directory)
+    Await.result(future, timeout.duration) == Ready
+    if (debug) println("Simulator receives ready")
+  }
   //}
 
   /**
@@ -73,19 +73,19 @@ class Simulator(val e: Environment, val delay : Int = 0) extends Actor with Reac
     //When the simulator replays
     case Replay =>
       pause = false
-      if (influences.keys.size == e.nbAgentBodies){ // Compute reaction
-        val timer = context.actorOf(Props(classOf[Timer],delay), "timer")
-        timer ! Wait
-      }else {// Otherwise wait for other actions
+      if (influences.keys.size == e.nbAgentBodies) { // Compute reaction
+        triggerTimerIfRequired()
+      } else {
+        // Otherwise wait for other actions
         if (debug) println(s"Simulator: it waits for other influences")
       }
 
     //When the simulator play next step
     case Next =>
-      if (influences.keys.size == e.nbAgentBodies){ // Compute reaction
-        val timer = context.actorOf(Props(classOf[Timer],delay), "timer")
-        timer ! Wait
-      }else {// Otherwise wait for other actions
+      if (influences.keys.size == e.nbAgentBodies) { // Compute reaction
+        triggerTimerIfRequired()
+      } else {
+        // Otherwise wait for other actions
         if (debug) println(s"Simulator: it waits for other influences")
       }
 
@@ -115,10 +115,10 @@ class Simulator(val e: Environment, val delay : Int = 0) extends Actor with Reac
       val bodyId = directory.id(sender)
       if (debug) println(s"Simulator receives $influence from $bodyId")
       influences = influences + (bodyId -> influence)
-      if (influences.keys.size == e.nbAgentBodies &&  !pause){ // Compute reaction
-        val timer = context.actorOf(Props(classOf[Timer],delay), "timer")
-        timer ! Wait
-      }else {// Otherwise wait for other actions
+      if (influences.keys.size == e.nbAgentBodies && !pause) { // Compute reaction
+        triggerTimerIfRequired()
+      } else {
+        // Otherwise wait for other actions
         if (debug) println(s"Simulator: it waits for other influences or replay")
       }
 
@@ -126,12 +126,22 @@ class Simulator(val e: Environment, val delay : Int = 0) extends Actor with Reac
     case Go =>
       if (debug) println(s"Simulator: it computes the reactions")
       react(influences, e, directory)
+      influences = Map[Int, Influence]()
       step += 1
 
     case msg@_ =>
       println("Simulator: it receives a message which was not expected: " + msg)
   }
 
+  /**
+    * Triggers a timer if required
+    */
+  def triggerTimerIfRequired() : Unit = {
+    if (delay != 0) {
+      val timer = context.actorOf(Props(classOf[Timer], delay), "timer" + Timer.nextId())
+      timer ! Wait
+    } else self ! Go
+  }
 }
 
 object Simulator {
