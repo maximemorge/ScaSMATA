@@ -14,8 +14,8 @@ class Environment(val height: Int, val width: Int,
                   val nbPackets : Int = 1, val maxSizePackets : Int= 1){
   val debug = false
 
-  val colorPackets = Red
-  val colorDestination = Red
+  val colorPackets = Red // For generation
+  val colorDestination = Red // For generation
   var nbScatteredPackets = nbPackets
 
   //Create the grid
@@ -108,6 +108,20 @@ class Environment(val height: Int, val width: Int,
     }).toIterable.filter(_.isDefined).map(_.get)
   }
 
+
+  /**
+    * Returns the list of packetIds
+    */
+  def packetIds() : Iterable[Int] = {
+    (for (j <- 0 until width; i <- 0 until height) yield {
+      grid(i)(j).content match {
+        case Packet(id,_,_) => Some(id)
+        case _ => None
+      }
+    }).toIterable.filter(_.isDefined).map(_.get)
+  }
+
+
   /**
     * Returns the coordinates of the body
     */
@@ -123,6 +137,27 @@ class Environment(val height: Int, val width: Int,
   }
 
   /**
+    * Return the color of a packet
+    */
+  def colorPacket(packetId: Int) : Color = {
+    for (j <- 0 until width; i <- 0 until height){
+      grid(i)(j).content match {
+        case Packet(id,color,_) if id == packetId => return color
+        case _ =>
+      }
+    }
+    new RuntimeException(s"Packet $packetId is not in the environment")
+    Red
+  }
+
+
+  /**
+    * Returns true if if the cell contains the destination for the packet
+    */
+  def hasDestinationForCell(cell : Cell, packetId : Int) : Boolean = cell.hasDestination(colorPacket(packetId))
+
+
+  /**
     * Returns the coordinates of the packet
     */
   def packetLocation(packetId: Int): (Int,Int) = {
@@ -135,6 +170,21 @@ class Environment(val height: Int, val width: Int,
     new RuntimeException(s"Packet $packetId is not in the environment")
     (-1,-1)
   }
+
+  /**
+    * Returns the coordinates of the location with a particular color
+    */
+  def destinationLocation(color: Color): (Int,Int) = {
+    for (j <- 0 until width; i <- 0 until height){
+      grid(i)(j).content match {
+        case Destination(colorDestination) if colorDestination == color => return (i,j)
+        case _ =>
+      }
+    }
+    new RuntimeException(s"There is no $color packet in the environment")
+    (-1,-1)
+  }
+
 
   /**
     * Returns the neigborhood of a cell
@@ -255,6 +305,5 @@ class Environment(val height: Int, val width: Int,
     val (i,j) = bodyLocation(bodyId)
     grid(i)(j).content.asInstanceOf[AgentBody].load
   }
-
 }
 

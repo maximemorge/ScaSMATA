@@ -39,7 +39,7 @@ class Simulator(val e: Environment, val delay : Int = 0) extends Actor{
     */
   e.bodyIds().foreach { bodyId =>
     if (debug) println(s"Simulator creates an agent for body $bodyId")
-    val actor = context.actorOf(Props(classOf[Agent], bodyId), bodyId.toString)
+    val actor = context.actorOf(Props(classOf[CleverAgent], bodyId), bodyId.toString)
     directory.add(bodyId, actor) // Add it to the directory
   }
   // Initiation of the agents with the directory

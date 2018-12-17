@@ -65,7 +65,18 @@ class Cell(i: Int, j : Int)extends Publisher{
   def hasPacket : Boolean = content.isInstanceOf[Packet]
 
   /**
+    * Returns true if the cell contains the packet with a particular id
+    */
+  def hasPacket(id : Int) : Boolean = content.isInstanceOf[Packet]  && content.asInstanceOf[Packet].id == id
+
+  /**
     * Returns true if the cell contains a destination
     */
   def hasDestination : Boolean = content.isInstanceOf[Destination]
+
+  /**
+    * Returns true if the cell contains the destination with color
+    */
+  def hasDestination(color : Color) : Boolean = content.isInstanceOf[Destination] && content.asInstanceOf[Destination].color == color
+
 }
