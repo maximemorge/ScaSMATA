@@ -35,7 +35,7 @@ class Dijkstra(e : Environment, oi : Int, oj : Int) {
     var min = Int.MaxValue
     var (x,y) = (-1,-1)
     unexplored.foreach{ case (i,j) =>
-      if (distance(i)(j) < Int.MaxValue){
+      if (distance(i)(j) < min){
         min = distance(i)(j)
         x = i
         y = j
@@ -66,10 +66,10 @@ class Dijkstra(e : Environment, oi : Int, oj : Int) {
     var neighbors = Seq[(Int,Int)]()
     if (i>0 && distance(i-1)(j)!=Int.MaxValue) neighbors :+= (i-1,j)
     if (j>0 && distance(i)(j-1)!=Int.MaxValue ) neighbors :+= (i,j-1)
-    //if (j>0 && i>0 && distance(i-1)(j-1)!=Int.MaxValue ) neighbors :+= (i-1,j-1)
+    if (j>0 && i>0 && distance(i-1)(j-1)!=Int.MaxValue ) neighbors :+= (i-1,j-1)
     if (i< e.height-1 && distance(i+1)(j)!=Int.MaxValue) neighbors :+=  (i+1,j)
     if (j< e.width-1 && distance(i)(j+1)!=Int.MaxValue) neighbors :+=  (i,j+1)
-    //if (i< e.height-1 && j< e.width-1 && distance(i+1)(j+1)!=Int.MaxValue) neighbors :+=  (i+1,j+1)
+    if (i< e.height-1 && j< e.width-1 && distance(i+1)(j+1)!=Int.MaxValue) neighbors :+=  (i+1,j+1)
     //Update the distance/precedecessor
     neighbors.foreach { case (ni, nj) =>
       if (distance(i)(j) > distance(ni)(nj) +1){
