@@ -87,28 +87,28 @@ trait CleverWalk extends DecisionRule{
         if (debug) println(s"Agent$bodyId is closed to the destination, put down packet")
         return PutDown(mind.load, mind.perception.colorPackets)
       }
-      if (debug) println(s"Agent$bodyId move toward the destination")
-      return moveToward( (i,j), mind.perception.destinationLocation(mind.perception.colorPacket(mind.load)))
+      if (debug) println(s"Agent$bodyId move toward the destination ${mind.perception.destinationLocation(mind.perception.colorPacket(mind.load))}")
+      return moveToward( (i,j), mind.perception.destinationLocation(mind.perception.colorPacket(mind.load)), mind.perception)
     }
     //
     if (mind.targets.isEmpty){
-      if (debug) print(s"Agent$bodyId has no target and so stay alive ahahah")
+      if (debug) println(s"Agent$bodyId has no target and so stay alive ahahah")
       return Move(Center)
     }
     val target = mind.targets.head
-    if (debug) print(s"Agent$bodyId has target $target")
+    if (debug) println(s"Agent$bodyId has target $target ${mind.perception.packetLocation(target)}")
     if (neighborhood.exists(c => c.hasPacket(target))) {
       if (debug) println(s"Agent$bodyId picks $target since it is closed")
       return PickUp(target)
     }
     if (debug) println(s"Agent$bodyId  moves toward the target $target")
-    moveToward( (i,j), mind.perception.packetLocation(target))
+    moveToward( (i,j), mind.perception.packetLocation(target), mind.perception)
   }
 
   /**
-    * Return the next move to go from source toward a destination
+    * Return the next move to fly from source toward a destination (according to euclidean distance)
     */
-  def moveToward(source: (Int,Int), destination : (Int,Int)) : Move = {
+  def flyToward(source: (Int,Int), destination : (Int,Int), e : Environment) : Move = {
     val (xs,ys) = source
     val (xd,yd) = destination
     var directions = Seq[Direction]()
@@ -117,7 +117,19 @@ trait CleverWalk extends DecisionRule{
     if (yd>ys) directions :+= East
     if (yd<ys) directions :+= West
     val direction = directions(rnd.nextInt(directions.length))
-    if (debug) println(s"move $direction to go from ($xs,$ys) to ($xd,$yd)")
     Move(direction)
   }
+
+  /**
+    * Return the next move to go from source toward a destination (according to  Dijkstra's algorithm)
+    */
+  def moveToward(source: (Int,Int), destination : (Int,Int), e : Environment) : Move = {
+    val (xs,ys) = source
+    val (xd,yd) = destination
+    val dijkstra = new Dijkstra(e,xs,ys)
+    dijkstra.run()
+    Move(dijkstra.nextDirectionTo(xd,yd))
+  }
+
+
 }
