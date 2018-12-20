@@ -5,7 +5,7 @@ package org.scasmata.environment
   * Color for Packets and CollectionPoint
   */
 object Color {
-val MAPPING = Map(1->Red, 2->Green, 3->Blue)
+val MAPPING = Map(1->Red, 2->Green, 3->Blue, 4 -> Black)
 }
 
 sealed trait Color
@@ -17,6 +17,9 @@ case object Green extends Color{
 }
 case object Blue extends Color{
   override def toString: String = "blue"
+}
+case object Black extends Color{
+  override def toString: String = "black"
 }
 case object Brown extends Color{
   override def toString: String = "brown"
