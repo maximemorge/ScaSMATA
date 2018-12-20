@@ -9,7 +9,7 @@ import scala.util.Random
   * @param height of the environment
   * @param width of the environment
   */
-class Environment(val height: Int, val width: Int, val n: Int = 1, val m: Int = 1, val maxSizePackets: Int = 1) {
+class Environment(val height: Int, val width: Int, val n: Int = 1, val m: Int = 1, val minSizePackets: Int = 1, val maxSizePackets: Int = 2) {
   val debug = false
 
   var nbScatteredPackets = m
@@ -49,7 +49,7 @@ class Environment(val height: Int, val width: Int, val n: Int = 1, val m: Int = 
       idPacket += 1
       val (i, j) = coordinates.remove(random.nextInt(coordinates.length))
       if (debug) println(s"Add packet in ($i, $j)")
-      grid(i)(j).setContent(Packet(id = idPacket, size = 1+random.nextInt(maxSizePackets), Brown))
+      grid(i)(j).setContent(Packet(id = idPacket, size = minSizePackets+random.nextInt(maxSizePackets), Brown))
     }
     val (i, j) = coordinates.remove(random.nextInt(coordinates.length))
     if (debug) println(s"Add destination in ($i, $j)")
@@ -102,6 +102,17 @@ class Environment(val height: Int, val width: Int, val n: Int = 1, val m: Int = 
     }).toIterable.filter(_.isDefined).map(_.get)
   }
 
+  /**
+    * Returns the list of packetIds by size
+    */
+  def packetIds(size : Int) : Iterable[Int] = {
+    (for (j <- 0 until width; i <- 0 until height) yield {
+      grid(i)(j).content match {
+        case Packet(id,s,_) if s == size => Some(id)
+        case _ => None
+      }
+    }).toIterable.filter(_.isDefined).map(_.get)
+  }
 
   /**
     * Returns the list of packetIds
@@ -114,7 +125,6 @@ class Environment(val height: Int, val width: Int, val n: Int = 1, val m: Int = 
       }
     }).toIterable.filter(_.isDefined).map(_.get)
   }
-
 
   /**
     * Returns the coordinates of the body
@@ -144,6 +154,22 @@ class Environment(val height: Int, val width: Int, val n: Int = 1, val m: Int = 
     new RuntimeException(s"Packet $packetId is not in the environment")
     (-1,-1)
   }
+
+  /**
+    * Returns the size of the packet
+    */
+  def packetSize(packetId: Int): Int = {
+    for (j <- 0 until width; i <- 0 until height){
+      grid(i)(j).content match {
+        case Packet(id,size,_) if packetId == id => return size
+        case _ =>
+      }
+    }
+    new RuntimeException(s"Packet $packetId is not in the environment")
+    -1
+  }
+
+
 
   /**
     * Returns the coordinates of the location

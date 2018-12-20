@@ -156,7 +156,7 @@ class Simulator(val e: Environment, val delay : Int = 0) extends Actor{
 
       case (bodyId,PickUp(id)) =>
         val listOfPacket = e.closedPackets(bodyId)
-        if (e.load(bodyId) != 0 || listOfPacket.isEmpty) {
+        if (e.load(bodyId) != 0 || listOfPacket.isEmpty || e.packetSize(id) > 1) {
           if (debug) println(s"Pickup($id) of $bodyId is failed")
           directory.adr(bodyId) ! Failure
         }

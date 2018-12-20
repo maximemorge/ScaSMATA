@@ -116,14 +116,15 @@ class CleverAgent(id : Int) extends Agent(id) with FSM[State, Mind]
     // If the perception is updated
     case Event(Update(e), mind) =>
       if (debug) println(s"Agent$id is updated")
-      var targets = selectTargets(id,e)
+      var targets = selectUnitTargets(id,e)
+      //TODO whatif there is some heavy packets
       if (debug) println(s"Agent$id chooses target $targets")
       sender ! Inform(targets)
       val updatedMind = new Mind(e, mind.load, mind.attempt, targets)
       val nextInfluence = decide(id, updatedMind)
       if (debug) println(s"Agent$id decides $nextInfluence")
       sender ! nextInfluence
-      stay using new Mind(e, mind.load, nextInfluence, selectTargets(id,e))
+      stay using new Mind(e, mind.load, nextInfluence, targets)
 
     // If the last influence is successful
     case Event(Success, mind) =>

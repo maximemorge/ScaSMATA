@@ -18,7 +18,7 @@ object MainWithoutUI{
   def main(args: Array[String]): Unit = {
     val TIMEOUTVALUE : FiniteDuration = 6000 minutes // Default timeout of a run
     implicit val timeout : Timeout = Timeout(TIMEOUTVALUE)
-    val e = new Environment(height = 4, width = 8)
+    val e = new Environment(height = 4, width = 8, minSizePackets = 1)
     val system = ActorSystem("ScaSMATASolver") //The Actor system
     val simulator = system.actorOf(Props(classOf[Simulator], e, 0), "Simulator")
     val future = simulator ? Play

@@ -66,8 +66,8 @@ trait CleverWalk extends DecisionRule{
   /**
     * Select the targets
     */
-  def selectTargets(id: Int, perception : Environment) : Seq[Int] = {
-    val targets = perception.packetIds().filter(_ % perception.n +1 == id)
+  def selectUnitTargets(id: Int, perception : Environment) : Seq[Int] = {
+    val targets = perception.packetIds(size = 1).filter(_ % perception.n +1 == id)
     if (debug) println(s"Agent$id selects targets $targets")
     targets.toSeq
   }
