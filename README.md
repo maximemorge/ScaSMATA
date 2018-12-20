@@ -19,9 +19,9 @@ over the rectangular grid.
 A job is the set of tasks of the agents to deliver all packets in the
 world. An agent can pick up a packet and put it down. The job efficiency 
 represents the number of steps, packet manipulations and message exchanges. 
-The "heavy packets" must be manipulated simultaneously by at most two agents 
+The "heavy packets" must be manipulated simultaneously by at most two agents. 
 
-![Snapshot](snapshot.png)(https://youtu.be/tE_rR6yMXsA)
+[![Screencast](snapshot.png)](https://youtu.be/_k2cTFNJZLo)
 
 ## Requirements
 
