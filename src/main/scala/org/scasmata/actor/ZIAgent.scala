@@ -89,7 +89,7 @@ class ZIAgent(id : Int) extends Agent(id) with FSM[State, Mind]
       sender ! Observe
       stay using (mind.attempt match {
         case PickUp(idPacket) => new Mind(mind.perception, idPacket, null, null)
-        case PutDown(_,_) => new Mind(mind.perception, 0, null, null)
+        case PutDown(_) => new Mind(mind.perception, 0, null, null)
         case _ => new Mind(mind.perception, mind.load, null, null)
       })
 
@@ -134,7 +134,7 @@ class CleverAgent(id : Int) extends Agent(id) with FSM[State, Mind]
             case _ => mind.targets.tail
           }
           new Mind(mind.perception, idPacket, null, newTarget)
-        case PutDown(_,_) =>
+        case PutDown(_) =>
           new Mind(mind.perception, 0, null, mind.targets)
         case _ =>
           new Mind(mind.perception, mind.load, null, mind.targets)

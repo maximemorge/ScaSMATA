@@ -40,7 +40,7 @@ trait ZeroIntelligent extends DecisionRule{
     val neighborhood = mind.perception.neighborhood(i,j)
     //1. put done packet if possible
     if (mind.load != 0 && neighborhood.exists(c => c.hasDestination))
-      return PutDown(mind.load, mind.perception.colorPackets)
+      return PutDown(mind.load)
     //2. pick up any packed if possible
     if (mind.load == 0) {
       neighborhood.foreach { c =>
@@ -67,7 +67,7 @@ trait CleverWalk extends DecisionRule{
     * Select the targets
     */
   def selectTargets(id: Int, perception : Environment) : Seq[Int] = {
-    val targets = perception.packetIds().filter(_ % perception.nbAgentBodies +1 == id)
+    val targets = perception.packetIds().filter(_ % perception.n +1 == id)
     if (debug) println(s"Agent$id selects targets $targets")
     targets.toSeq
   }
@@ -83,12 +83,12 @@ trait CleverWalk extends DecisionRule{
 
     if (mind.load != 0) {
       if (debug) println(s"Agent$bodyId is loaded")
-      if (neighborhood.exists(c =>  mind.perception.hasDestinationForCell(c, mind.load))) {
+      if (neighborhood.exists(c =>  c.hasDestination)) {
         if (debug) println(s"Agent$bodyId is closed to the destination, put down packet")
-        return PutDown(mind.load, mind.perception.colorPackets)
+        return PutDown(mind.load)
       }
-      if (debug) println(s"Agent$bodyId move toward the destination ${mind.perception.destinationLocation(mind.perception.colorPacket(mind.load))}")
-      return moveToward( (i,j), mind.perception.destinationLocation(mind.perception.colorPacket(mind.load)), mind.perception)
+      if (debug) println(s"Agent$bodyId move toward the destination ${mind.perception.destinationLocation()}")
+      return moveToward( (i,j), mind.perception.destinationLocation(), mind.perception)
     }
     //
     if (mind.targets.isEmpty){

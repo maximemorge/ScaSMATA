@@ -36,8 +36,8 @@ case class Move(direction : Direction) extends Influence() { // move toward a pa
 case class PickUp(idPacket : Int) extends Influence() { // pick up a particular packet
   override def toString: String = s"PickUp(packet$idPacket)"
 }
-case class PutDown(idPacket : Int, color: Color) extends Influence() { // put down a particular packet in a colored destination
-  override def toString: String = s"PutDown(packet$idPacket)"
+case class PutDown(idPacket : Int) extends Influence() { // put down a particular packet in a colored destination
+  override def toString: String = s"PutDown(packet)"
 }
 
 /**

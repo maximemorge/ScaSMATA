@@ -21,13 +21,13 @@ class Cell(i: Int, j : Int)extends Publisher{
     */
   def label() : Label = {
     val path = (content match {
-      case Destination(color) =>
-        color+"Place"
+      case Destination() =>
+        "brownPlace"
       case AgentBody(id,load) =>
         if (load == 0) "fig"+id.toString
-        else  "fig"+id.toString+"red"
-      case Packet(_,color,size) =>
-        color+size.toString
+        else  "fig"+id.toString+"load"
+      case Packet(_,size) =>
+        "brown"+size.toString
       case NoEntity =>
         "nothing"
     }) + ".png"
@@ -73,10 +73,5 @@ class Cell(i: Int, j : Int)extends Publisher{
     * Returns true if the cell contains a destination
     */
   def hasDestination : Boolean = content.isInstanceOf[Destination]
-
-  /**
-    * Returns true if the cell contains the destination with color
-    */
-  def hasDestination(color : Color) : Boolean = content.isInstanceOf[Destination] && content.asInstanceOf[Destination].color == color
 
 }

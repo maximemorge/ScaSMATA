@@ -5,18 +5,14 @@ import scala.collection.mutable.ListBuffer
 import scala.util.Random
 
 /**
-  * A representation of the environment
+  * A representation of the environment whic contains 1 destination, n agents and m packets
   * @param height of the environment
   * @param width of the environment
   */
-class Environment(val height: Int, val width: Int,
-                  val nbDestionations : Int = 1, val nbAgentBodies  : Int = 1,
-                  val nbPackets : Int = 1, val maxSizePackets : Int= 1){
+class Environment(val height: Int, val width: Int, val n: Int = 1, val m: Int = 1, val maxSizePackets: Int = 1) {
   val debug = false
 
-  val colorPackets = Red // For generation
-  val colorDestination = Red // For generation
-  var nbScatteredPackets = nbPackets
+  var nbScatteredPackets = m
 
   //Create the grid
   private val grid = Array.ofDim[Cell](height, width)
@@ -32,7 +28,7 @@ class Environment(val height: Int, val width: Int,
   def reset() : Unit = {
     for (i <- 0 until height; j <- 0 until width)
       grid(i)(j).setContent(NoEntity)
-    nbScatteredPackets = nbPackets
+    nbScatteredPackets = m
   }
   /**
     * Initiate a random environment
@@ -43,23 +39,21 @@ class Environment(val height: Int, val width: Int,
     var idPacket = 0
     var coordinates = ListBuffer[(Int,Int)]()
     for (j <- 0 until width; i <- 0 until height) coordinates += ((i,j))
-    for (k <- 0 until nbAgentBodies) {
+    for (k <- 0 until n) {
       idBody += 1
       val (i, j) = coordinates.remove(random.nextInt(coordinates.length))
       if (debug) println(s"Add body in ($i, $j)")
       grid(i)(j).setContent(AgentBody(id = idBody))
     }
-    for (k <- 0 until nbPackets) {
+    for (k <- 0 until m) {
       idPacket += 1
       val (i, j) = coordinates.remove(random.nextInt(coordinates.length))
       if (debug) println(s"Add packet in ($i, $j)")
-      grid(i)(j).setContent(Packet(id = idPacket, colorPackets, size = 1+random.nextInt(maxSizePackets)))
+      grid(i)(j).setContent(Packet(id = idPacket, size = 1+random.nextInt(maxSizePackets)))
     }
-    for (k <- 0 until nbDestionations) {
-      val (i, j) = coordinates.remove(random.nextInt(coordinates.length))
-      if (debug) println(s"Add collectionPoint in ($i, $j)")
-      grid(i)(j).setContent(Destination(colorDestination))
-    }
+    val (i, j) = coordinates.remove(random.nextInt(coordinates.length))
+    if (debug) println(s"Add destination in ($i, $j)")
+    grid(i)(j).setContent(Destination())
   }
 
   /**
@@ -115,7 +109,7 @@ class Environment(val height: Int, val width: Int,
   def packetIds() : Iterable[Int] = {
     (for (j <- 0 until width; i <- 0 until height) yield {
       grid(i)(j).content match {
-        case Packet(id,_,_) => Some(id)
+        case Packet(id,_) => Some(id)
         case _ => None
       }
     }).toIterable.filter(_.isDefined).map(_.get)
@@ -136,26 +130,6 @@ class Environment(val height: Int, val width: Int,
     (-1,-1)
   }
 
-  /**
-    * Return the color of a packet
-    */
-  def colorPacket(packetId: Int) : Color = {
-    for (j <- 0 until width; i <- 0 until height){
-      grid(i)(j).content match {
-        case Packet(id,color,_) if id == packetId => return color
-        case _ =>
-      }
-    }
-    new RuntimeException(s"Packet $packetId is not in the environment")
-    Red
-  }
-
-
-  /**
-    * Returns true if if the cell contains the destination for the packet
-    */
-  def hasDestinationForCell(cell : Cell, packetId : Int) : Boolean = cell.hasDestination(colorPacket(packetId))
-
 
   /**
     * Returns the coordinates of the packet
@@ -163,7 +137,7 @@ class Environment(val height: Int, val width: Int,
   def packetLocation(packetId: Int): (Int,Int) = {
     for (j <- 0 until width; i <- 0 until height){
       grid(i)(j).content match {
-        case Packet(id,_,_) if packetId == id => return (i,j)
+        case Packet(id,_) if packetId == id => return (i,j)
         case _ =>
       }
     }
@@ -172,16 +146,16 @@ class Environment(val height: Int, val width: Int,
   }
 
   /**
-    * Returns the coordinates of the location with a particular color
+    * Returns the coordinates of the location
     */
-  def destinationLocation(color: Color): (Int,Int) = {
+  def destinationLocation(): (Int,Int) = {
     for (j <- 0 until width; i <- 0 until height){
       grid(i)(j).content match {
-        case Destination(colorDestination) if colorDestination == color => return (i,j)
+        case Destination()  => return (i,j)
         case _ =>
       }
     }
-    new RuntimeException(s"There is no $color packet in the environment")
+    new RuntimeException(s"There is no destination in the environment")
     (-1,-1)
   }
 
@@ -265,6 +239,16 @@ class Environment(val height: Int, val width: Int,
   }
 
 
+
+  /**
+    * Returns true if a destination is closed to the body
+    */
+  def closedDestination(bodyId: Int) : Boolean = {
+    val (i, j) = bodyLocation(bodyId)
+    neighborhood(i, j).exists(c => c.hasDestination)
+  }
+
+
   /**
     * Returns true if a packet is closed to the body
     */
@@ -281,19 +265,6 @@ class Environment(val height: Int, val width: Int,
     val (i, j) = bodyLocation(bodyId)
     neighborhood(i, j).foreach { c =>
       if (c.hasPacket)  l :+= c.content.asInstanceOf[Packet].id
-    }
-    l
-  }
-
-  /**
-    * Returns the list of destinations closed to the bodyId
-    */
-  def closedDestinations(bodyId: Int, color: Color) : Seq[Destination] = {
-    var l = Seq[Destination]()
-    val (i, j) = bodyLocation(bodyId)
-    neighborhood(i, j).foreach { c =>
-      if (c.content.isInstanceOf[Destination] && c.content.asInstanceOf[Destination].color == color)
-        l :+= c.content.asInstanceOf[Destination]
     }
     l
   }

@@ -69,7 +69,7 @@ class Simulator(val e: Environment, val delay : Int = 0) extends Actor{
     //When the simulator replays
     case Replay =>
       pause = false
-      if (influences.keys.size == e.nbAgentBodies) { // Compute reaction
+      if (influences.keys.size == e.n) { // Compute reaction
         triggerTimerIfRequired()
       } else {
         // Otherwise wait for other actions
@@ -78,7 +78,7 @@ class Simulator(val e: Environment, val delay : Int = 0) extends Actor{
 
     //When the simulator play next step
     case Next =>
-      if (influences.keys.size == e.nbAgentBodies) { // Compute reaction
+      if (influences.keys.size == e.n) { // Compute reaction
         triggerTimerIfRequired()
       } else {
         // Otherwise wait for other actions
@@ -102,7 +102,7 @@ class Simulator(val e: Environment, val delay : Int = 0) extends Actor{
       if (debug) println(s"Simulator receives $influence from $bodyId")
       influences = influences + (bodyId -> influence)
       if (influence != Move(Center))  steps += (bodyId-> (steps.getOrElse(bodyId,0)+1))
-      if (influences.keys.size == e.nbAgentBodies && !pause) { // Compute reaction
+      if (influences.keys.size == e.n && !pause) { // Compute reaction
         triggerTimerIfRequired()
       } else {
         // Otherwise wait for other actions
@@ -160,10 +160,9 @@ class Simulator(val e: Environment, val delay : Int = 0) extends Actor{
           directory.adr(bodyId) ! Success
         }
 
-      case (bodyId, PutDown(idPacket,color)) =>
-        val listOfDestination = e.closedDestinations(bodyId,color)
-        if (e.load(bodyId)==0 || listOfDestination.isEmpty) {
-          if (debug) println(s"PutDown($idPacket,$color) of $bodyId is failed")
+      case (bodyId, PutDown(idPacket)) =>
+        if (e.load(bodyId)==0 ||  !e.closedDestination(bodyId)) {
+          if (debug) println(s"PutDown($idPacket) of $bodyId is failed")
           directory.adr(bodyId) ! Failure
         }
         else {
