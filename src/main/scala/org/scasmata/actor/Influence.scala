@@ -25,6 +25,7 @@ case object Ready extends Message // The agent is ready to talk to the other age
 abstract class ObservationMessage extends Message
 case object Observe extends ObservationMessage // The agent observe the environment throught the scheduler
 case class Update(environment : Environment) extends ObservationMessage // The agent is informed about the environment state
+case class Inform(targets : Seq[Int]) extends  ObservationMessage// The agents informs the simulator about its targets
 
 /**
   * Influence

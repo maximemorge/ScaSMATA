@@ -26,8 +26,8 @@ class Cell(i: Int, j : Int)extends Publisher{
       case AgentBody(id,load) =>
         if (load == 0) "fig"+id.toString
         else  "fig"+id.toString+"load"
-      case Packet(_,size) =>
-        "brown"+size.toString
+      case Packet(_,size,color) =>
+        color.toString+size.toString
       case NoEntity =>
         "nothing"
     }) + ".png"

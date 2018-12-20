@@ -49,7 +49,7 @@ class Environment(val height: Int, val width: Int, val n: Int = 1, val m: Int = 
       idPacket += 1
       val (i, j) = coordinates.remove(random.nextInt(coordinates.length))
       if (debug) println(s"Add packet in ($i, $j)")
-      grid(i)(j).setContent(Packet(id = idPacket, size = 1+random.nextInt(maxSizePackets)))
+      grid(i)(j).setContent(Packet(id = idPacket, size = 1+random.nextInt(maxSizePackets), Brown))
     }
     val (i, j) = coordinates.remove(random.nextInt(coordinates.length))
     if (debug) println(s"Add destination in ($i, $j)")
@@ -109,7 +109,7 @@ class Environment(val height: Int, val width: Int, val n: Int = 1, val m: Int = 
   def packetIds() : Iterable[Int] = {
     (for (j <- 0 until width; i <- 0 until height) yield {
       grid(i)(j).content match {
-        case Packet(id,_) => Some(id)
+        case Packet(id,_,_) => Some(id)
         case _ => None
       }
     }).toIterable.filter(_.isDefined).map(_.get)
@@ -137,7 +137,7 @@ class Environment(val height: Int, val width: Int, val n: Int = 1, val m: Int = 
   def packetLocation(packetId: Int): (Int,Int) = {
     for (j <- 0 until width; i <- 0 until height){
       grid(i)(j).content match {
-        case Packet(id,_) if packetId == id => return (i,j)
+        case Packet(id,_,_) if packetId == id => return (i,j)
         case _ =>
       }
     }
@@ -238,6 +238,15 @@ class Environment(val height: Int, val width: Int, val n: Int = 1, val m: Int = 
     grid(i)(j).setContent(AgentBody(bodyId))
   }
 
+
+  /**
+    * Update the environment with a target
+    */
+  def updateTarget(bodyId : Int, packetId: Int) = {
+    val (i,j) = packetLocation(packetId)
+    val packet : Packet = grid(i)(j).content.asInstanceOf[Packet]
+    grid(i)(j).setContent(Packet(packetId,packet.size,Color.MAPPING(bodyId)))//
+  }
 
 
   /**

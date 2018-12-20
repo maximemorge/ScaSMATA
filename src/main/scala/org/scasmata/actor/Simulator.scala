@@ -96,6 +96,13 @@ class Simulator(val e: Environment, val delay : Int = 0) extends Actor{
       if (debug) println(s"Simulator updates $bodyId")
       sender ! Update(e)
 
+    //When an actor observe the environment
+    case Inform(targets) =>
+      val bodyId = directory.id(sender)
+      if (debug) println(s"Simulator updates $bodyId's targets")
+      targets.foreach(packetId =>e.updateTarget(bodyId,packetId))
+
+
     // When an agent wants to act
     case influence: Influence =>
       val bodyId = directory.id(sender)
