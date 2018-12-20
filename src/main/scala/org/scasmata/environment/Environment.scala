@@ -5,7 +5,7 @@ import scala.collection.mutable.ListBuffer
 import scala.util.Random
 
 /**
-  * A representation of the environment whic contains 1 destination, n agents and m packets
+  * A representation of the environment which contains 1 destination, n agents and m packets
   * @param height of the environment
   * @param width of the environment
   */
