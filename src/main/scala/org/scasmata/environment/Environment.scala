@@ -8,10 +8,13 @@ import scala.util.Random
   * A representation of the environment which contains 1 destination, n agents and m packets
   * @param height of the environment
   * @param width of the environment
+  * @param minSizePackets minimal size of the packets (1 by default)
+  * @param maxSizePackets maximal size of the packets (2 by default)
   */
 class Environment(val height: Int, val width: Int, val n: Int = 1, val m: Int = 1, val minSizePackets: Int = 1, val maxSizePackets: Int = 2) {
   val debug = false
 
+  // Number of packets which are still available to be picked up in the environment
   var nbScatteredPackets = m
 
   //Create the grid
@@ -32,25 +35,29 @@ class Environment(val height: Int, val width: Int, val n: Int = 1, val m: Int = 
   }
   /**
     * Initiate a random environment
+    * Note : we assume here that any resource is available by any agent
+    * (i.e. resource and destination are reachable)
+    * TODO : check it in the environment generation
     */
   def init() : Unit = {
     val random = new Random
     var idBody = 0
     var idPacket = 0
-    var coordinates = ListBuffer[(Int,Int)]()
+    var coordinates = ListBuffer[(Int,Int)]() // List of coordinates of free cells
     for (j <- 0 until width; i <- 0 until height) coordinates += ((i,j))
-    for (k <- 0 until n) {
+    for (k <- 0 until n){// Add n agent bodies
       idBody += 1
       val (i, j) = coordinates.remove(random.nextInt(coordinates.length))
       if (debug) println(s"Add body in ($i, $j)")
       grid(i)(j).setContent(AgentBody(id = idBody))
     }
-    for (k <- 0 until m) {
+    for (k <- 0 until m){// Add m packets
       idPacket += 1
       val (i, j) = coordinates.remove(random.nextInt(coordinates.length))
       if (debug) println(s"Add packet in ($i, $j)")
       grid(i)(j).setContent(Packet(id = idPacket, size = minSizePackets+random.nextInt(maxSizePackets), Brown))
     }
+    // Add the destination
     val (i, j) = coordinates.remove(random.nextInt(coordinates.length))
     if (debug) println(s"Add destination in ($i, $j)")
     grid(i)(j).setContent(Destination())
@@ -64,12 +71,10 @@ class Environment(val height: Int, val width: Int, val n: Int = 1, val m: Int = 
     init()
   }
 
-
   /**
     * Returns the cell (i,j)
     */
   def get(i: Int, j: Int): Cell = grid(i)(j)
-
 
   /**
     * Returns a string representation of the environment
@@ -93,10 +98,10 @@ class Environment(val height: Int, val width: Int, val n: Int = 1, val m: Int = 
   /**
     * Returns the list of bodyIds
     */
-  def bodyIds() : Iterable[Int] = {
+  def bodies() : Iterable[AgentBody] = {
     (for (j <- 0 until width; i <- 0 until height) yield {
       grid(i)(j).content match {
-        case AgentBody(id,_) => Some(id)
+        case body : AgentBody => Some(body)
         case _ => None
       }
     }).toIterable.filter(_.isDefined).map(_.get)
@@ -105,22 +110,10 @@ class Environment(val height: Int, val width: Int, val n: Int = 1, val m: Int = 
   /**
     * Returns the list of packetIds by size
     */
-  def packetIds(size : Int) : Iterable[Int] = {
+  def packets(size : Int) : Iterable[Packet] = {
     (for (j <- 0 until width; i <- 0 until height) yield {
       grid(i)(j).content match {
-        case Packet(id,s,_) if s == size => Some(id)
-        case _ => None
-      }
-    }).toIterable.filter(_.isDefined).map(_.get)
-  }
-
-  /**
-    * Returns the list of packetIds
-    */
-  def packetIds() : Iterable[Int] = {
-    (for (j <- 0 until width; i <- 0 until height) yield {
-      grid(i)(j).content match {
-        case Packet(id,_,_) => Some(id)
+        case packet : Packet if packet.size == size => Some(packet)
         case _ => None
       }
     }).toIterable.filter(_.isDefined).map(_.get)

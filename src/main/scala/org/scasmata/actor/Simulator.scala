@@ -37,10 +37,10 @@ class Simulator(val e: Environment, val delay : Int = 0) extends Actor{
   /**
     * Start simulator
     */
-  e.bodyIds().foreach { bodyId =>
-    if (debug) println(s"Simulator creates an agent for body $bodyId")
-    val actor = context.actorOf(Props(classOf[CleverAgent], bodyId), bodyId.toString)
-    directory.add(bodyId, actor) // Add it to the directory
+  e.bodies().foreach { body =>
+    if (debug) println(s"Simulator creates an agent for body ${body.id}")
+    val actor = context.actorOf(Props(classOf[CleverAgent], body.id), body.toString)
+    directory.add(body.id, actor) // Add it to the directory
   }
   // Initiation of the agents with the directory
   if (debug) println(s"Simulator initiates all agents")
@@ -142,7 +142,6 @@ class Simulator(val e: Environment, val delay : Int = 0) extends Actor{
     */
   def react() : Unit = {
     influences.map{
-
       case (bodyId,Move(direction)) =>
         if (!e.isPossibleDirection(bodyId,direction)){
           if (debug) println(s"Move($direction) of $bodyId is impossible")

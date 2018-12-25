@@ -3,8 +3,6 @@ package org.scasmata.environment
 
 /**
   * Implementation fo Dijkstra's algorithm for finding the shortest paths from a origin cell in an environment
-  * Note : we assume here that any resource is available by any agent (i.e. resource and destination are reachable)
-  * TODO : check it in the environment generation
   * @param e the environment
   * @param oi line of the origine
   * @param oj column of the origine

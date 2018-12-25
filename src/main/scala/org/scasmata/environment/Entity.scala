@@ -13,7 +13,7 @@ case class Destination()
   override def toString: String = s"D   "
 }
 case class AgentBody(id : Int, load: Int = 0)extends Entity{
-  override def toString: String = s"B$id$load "
+  override def toString: String = "B"+id+load
 }
 case class Packet(id: Int, size: Int, color: Color) extends Entity{
   override def toString: String = s"P$id$size$color"
