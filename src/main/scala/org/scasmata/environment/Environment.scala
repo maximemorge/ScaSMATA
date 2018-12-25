@@ -34,10 +34,8 @@ class Environment(val height: Int, val width: Int, val n: Int = 1, val m: Int = 
     nbScatteredPackets = m
   }
   /**
-    * Initiate a random environment
-    * Note : we assume here that any resource is available by any agent
-    * (i.e. resource and destination are reachable)
-    * TODO : check it in the environment generation
+    * Initiate a random environment such as each entity has no neighbor,
+    * such that the destination and the packets are available for each agent
     */
   def init() : Unit = {
     val random = new Random
@@ -48,17 +46,20 @@ class Environment(val height: Int, val width: Int, val n: Int = 1, val m: Int = 
     for (k <- 0 until n){// Add n agent bodies
       idBody += 1
       val (i, j) = coordinates.remove(random.nextInt(coordinates.length))
+      coordinates --= Seq((i,j-1),(i,j+1),(i-1,j+1))
       if (debug) println(s"Add body in ($i, $j)")
       grid(i)(j).setContent(AgentBody(id = idBody))
     }
     for (k <- 0 until m){// Add m packets
       idPacket += 1
       val (i, j) = coordinates.remove(random.nextInt(coordinates.length))
+      coordinates --= Seq((i,j-1),(i,j+1),(i-1,j+1))
       if (debug) println(s"Add packet in ($i, $j)")
       grid(i)(j).setContent(Packet(id = idPacket, size = minSizePackets+random.nextInt(maxSizePackets), Brown))
     }
     // Add the destination
     val (i, j) = coordinates.remove(random.nextInt(coordinates.length))
+    coordinates --= Seq((i,j-1),(i,j+1),(i-1,j+1))
     if (debug) println(s"Add destination in ($i, $j)")
     grid(i)(j).setContent(Destination())
   }
