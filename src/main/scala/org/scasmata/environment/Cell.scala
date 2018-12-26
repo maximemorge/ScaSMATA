@@ -13,22 +13,26 @@ import scala.swing.event.ValueChanged
   */
 class Cell(i: Int, j : Int)extends Publisher{
   val debug = false
-  var content : Entity = NoEntity
-  override def toString: String = s"|$content|"
+  var content : Option[Entity] = None
+
+  override def toString: String = content match {
+    case Some(e) => s"|$e|"
+    case None => "      "
+  }
 
   /**
     * Returns the cell representation within a label with an icon
     */
   def label() : Label = {
     val path = (content match {
-      case Destination() =>
+      case Some(Destination()) =>
         "brownPlace"
-      case AgentBody(id,load) =>
-        if (load == 0) "fig"+id.toString
+      case Some(AgentBody(id,load)) =>
+        if (load.isEmpty) "fig"+id.toString
         else  "fig"+id.toString+"load"
-      case Packet(_,size,color) =>
+      case Some(Packet(_,size,color)) =>
         color.toString+size.toString
-      case NoEntity =>
+      case None =>
         "nothing"
     }) + ".png"
     if (debug) println(s"Show image $path")
@@ -39,39 +43,41 @@ class Cell(i: Int, j : Int)extends Publisher{
   }
 
   /**
-    * Change the content of the cell if required and publish it
+    * Change the content of the cell and publish it
     */
-  def setContent(entity: Entity) : Unit  = {
-    if (entity != content){
-      content = entity
-      publish(new ValueChanged(label()))
-    }
+  def setContent(entity: Option[Entity]) : Unit  = {
+    content = entity
+    publish(new ValueChanged(label()))
   }
 
   /**
-    *
     *  Returns true of the cell contains no entity
     */
-  def isEmpty : Boolean = content == NoEntity
-
-  /**
-    * Returns true if the cell contains the body with a particular id
-    */
-  def hasBody(id : Int) : Boolean = content.isInstanceOf[AgentBody] && content.asInstanceOf[AgentBody].id == id
+  def isEmpty : Boolean = content.isEmpty
 
   /**
     * Returns true if the cell contains a packet
     */
-  def hasPacket : Boolean = content.isInstanceOf[Packet]
+  def hasPacket : Boolean = content match {
+    case Some(_: Packet) => true
+    case _ => false
+  }
 
   /**
-    * Returns true if the cell contains the packet with a particular id
+    * Returns true if the cell contains a particular packet
     */
-  def hasPacket(id : Int) : Boolean = content.isInstanceOf[Packet]  && content.asInstanceOf[Packet].id == id
+  def hasPacket(packet: Packet) : Boolean =
+    content match {
+      case Some(p: Packet) if p == packet=> true
+      case _ => false
+    }
 
   /**
     * Returns true if the cell contains a destination
     */
-  def hasDestination : Boolean = content.isInstanceOf[Destination]
+  def hasDestination : Boolean = content match {
+    case Some(_: Destination) => true
+    case _ => false
+  }
 
 }

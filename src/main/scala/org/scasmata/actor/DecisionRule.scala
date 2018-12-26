@@ -35,23 +35,22 @@ trait ZeroIntelligent extends DecisionRule{
     * 3. move randomly if possible
     */
   def decide(bodyId: Int, mind: Mind) : Influence = {
-    val (i,j) = mind.perception.bodyLocation(bodyId)
+    val (i,j) = mind.perception.location(mind.perception.bodies(bodyId))
     println(s"Agent$bodyId in ($i,$j) decides")
     val neighborhood = mind.perception.neighborhood(i,j)
     //1. put done packet if possible
-    if (mind.load != 0 && neighborhood.exists(c => c.hasDestination))
-      return PutDown(mind.load)
-    //2. pick up any packed if possible
-    if (mind.load == 0) {
+    if (mind.load.isDefined && neighborhood.exists(c => c.hasDestination))
+      return PutDown(mind.load.get)
+    //2. pick up any packed if possible TODO only the target
+    if (mind.load.isEmpty) {
       neighborhood.foreach { c =>
         if (c.hasPacket) {
-          val packetId = c.content.asInstanceOf[Packet].id
-          return PickUp(packetId)
+          val packet = c.content.asInstanceOf[Packet]
+          return PickUp(packet)
         }
       }
     }
     //3. move randomly if possible
-    val random = Random
     val directions = mind.perception.possibleDirections(i,j)
     Move(directions(rnd.nextInt(directions.length)))
   }
@@ -66,10 +65,10 @@ trait CleverWalk extends DecisionRule{
   /**
     * Select the targets
     */
-  def selectUnitTargets(id: Int, perception : Environment) : Seq[Int] = {
-    val targets = perception.packets(size = 1).filter(_.id % perception.n +1 == id)
+  def selectUnitTargets(id: Int, perception : Environment) : Seq[Packet] = {
+    val targets = perception.packetsOfSize(size = 1).filter(_.id % perception.n +1 == id)
     if (debug) println(s"Agent$id selects targets $targets")
-    targets.map(_.id).toSeq
+    targets.toSeq
   }
 
 
@@ -77,15 +76,16 @@ trait CleverWalk extends DecisionRule{
     * Decide next move
     */
   def decide(bodyId: Int, mind: Mind) : Influence = {
-    val (i,j) = mind.perception.bodyLocation(bodyId)
+    val body = mind.perception.bodies(bodyId)
+    val (i,j) = mind.perception.location(body)
     println(s"Agent$bodyId in ($i,$j) decides")
     val neighborhood = mind.perception.neighborhood(i,j)
 
-    if (mind.load != 0) {
+    if (mind.load.isDefined) {
       if (debug) println(s"Agent$bodyId is loaded")
-      if (neighborhood.exists(c =>  c.hasDestination)) {
+      if (mind.perception.closedDestination(body)) {
         if (debug) println(s"Agent$bodyId is closed to the destination, put down packet")
-        return PutDown(mind.load)
+        return PutDown(mind.load.get)
       }
       if (debug) println(s"Agent$bodyId move toward the destination ${mind.perception.destinationLocation()}")
       return moveToward( (i,j), mind.perception.destinationLocation(), mind.perception)
@@ -96,13 +96,13 @@ trait CleverWalk extends DecisionRule{
       return Move(Center)
     }
     val target = mind.targets.head
-    if (debug) println(s"Agent$bodyId has target $target ${mind.perception.packetLocation(target)}")
-    if (neighborhood.exists(c => c.hasPacket(target))) {
+    if (debug) println(s"Agent$bodyId has target $target ${mind.perception.location(target)}")
+    if (mind.perception.closedPacket(body,target)){
       if (debug) println(s"Agent$bodyId picks $target since it is closed")
       return PickUp(target)
     }
     if (debug) println(s"Agent$bodyId  moves toward the target $target")
-    moveToward( (i,j), mind.perception.packetLocation(target), mind.perception)
+    moveToward( (i,j), mind.perception.location(target), mind.perception)
   }
 
   /**

@@ -9,24 +9,24 @@ import akka.util.Timeout
 import scala.concurrent.duration._
 import scala.language.postfixOps
 
-import org.scasmata.environment.{Center, Environment}
+import org.scasmata.environment.{Center, Environment, AgentBody}
 
 /**
   * Simulator which :
   * - synchronizes the influences
   * - computes the reactions
   * - updates the environment
-  * @param environment current state of the environment
+  * @param e current state of the environment
   * @param delay  waiting time before a reaction
   * */
 class Simulator(val e: Environment, val delay : Int = 0) extends Actor{
   val debug = true
 
-  val TIMEOUTVALUE: FiniteDuration = 1 seconds // Default timeout of step
-  implicit val timeout: Timeout = Timeout(TIMEOUTVALUE)
+  val TIMEOUT_VALUE: FiniteDuration = 1 seconds // Default timeout of step
+  implicit val timeout: Timeout = Timeout(TIMEOUT_VALUE)
   var pause = false
 
-  var runner = context.parent // The actor which triggers the simulation and gathers the steps
+  var runner : ActorRef= context.parent // The actor which triggers the simulation and gathers the steps
   var directory = new Directory() // White page for bodyId/ActorRef
   var nbReadyAgent = 0 // Number of agents which are ready to talk to each other
   var nbStoppedAgents = 0
@@ -37,9 +37,9 @@ class Simulator(val e: Environment, val delay : Int = 0) extends Actor{
   /**
     * Start simulator
     */
-  e.bodies().foreach { body =>
+  e.bodies.values.foreach { body =>
     if (debug) println(s"Simulator creates an agent for body ${body.id}")
-    val actor = context.actorOf(Props(classOf[CleverAgent], body.id), body.toString)
+    val actor = context.actorOf(Props(classOf[CleverAgent], body.id), body.id.toString)
     directory.add(body.id, actor) // Add it to the directory
   }
   // Initiation of the agents with the directory
@@ -87,7 +87,7 @@ class Simulator(val e: Environment, val delay : Int = 0) extends Actor{
 
     //When the simulator is killed
     case Kill =>
-      directory.allAgents.foreach(a => a ! Kill)
+      directory.allAgents().foreach(a => a ! Kill)
       context.stop(self)
 
     //When an actor observe the environment
@@ -100,8 +100,7 @@ class Simulator(val e: Environment, val delay : Int = 0) extends Actor{
     case Inform(targets) =>
       val bodyId = directory.id(sender)
       if (debug) println(s"Simulator updates $bodyId's targets")
-      targets.foreach(packetId =>e.updateTarget(bodyId,packetId))
-
+      targets.foreach(packet =>e.updateTarget(bodyId, packet))
 
     // When an agent wants to act
     case influence: Influence =>
@@ -143,37 +142,38 @@ class Simulator(val e: Environment, val delay : Int = 0) extends Actor{
   def react() : Unit = {
     influences.map{
       case (bodyId,Move(direction)) =>
-        if (!e.isPossibleDirection(bodyId,direction)){
+        val body = e.bodies(bodyId)
+        if (!e.isPossibleDirection(body,direction)){
           if (debug) println(s"Move($direction) of $bodyId is impossible")
           directory.adr(bodyId) ! Failure
         }
         else{
-          e.updateMove(bodyId,direction)
+          e.updateMove(body,direction)
           if (debug) println(s"Move($direction) of $bodyId is performed")
           directory.adr(bodyId) ! Success
         }
 
-      case (bodyId,PickUp(id)) =>
-        val listOfPacket = e.closedPackets(bodyId)
-        if (e.load(bodyId) != 0 || listOfPacket.isEmpty || e.packetSize(id) > 1) {
-          if (debug) println(s"Pickup($id) of $bodyId is failed")
+      case (bodyId,PickUp(packet)) =>
+        val body = e.bodies(bodyId)
+        if (packet.size > 1 || body.load.isDefined || ! e.closedPacket(body,packet)) {
+          if (debug) println(s"Pickup(${packet.id} of $bodyId is failed")
           directory.adr(bodyId) ! Failure
         }
         else {
-          val idPacket = listOfPacket.head
-          e.updatePickUp(bodyId,idPacket)
-          if (debug) println(s"Pickup($idPacket) of $bodyId is performed")
+          e.updatePickUp(body, packet)
+          if (debug) println(s"Pickup(${packet.id} of $bodyId is performed")
           directory.adr(bodyId) ! Success
         }
 
-      case (bodyId, PutDown(idPacket)) =>
-        if (e.load(bodyId)==0 ||  !e.closedDestination(bodyId)) {
-          if (debug) println(s"PutDown($idPacket) of $bodyId is failed")
+      case (bodyId, PutDown(packet)) =>
+        val body = e.bodies(bodyId)
+        if (!body.load.contains(packet) ||  !e.closedDestination(body)) {
+          if (debug) println(s"PutDown($packet) of $body is failed")
           directory.adr(bodyId) ! Failure
         }
         else {
-          e.updatePutDown(bodyId,idPacket)
-          if (debug) println(s"PutDown($idPacket) of $bodyId is performed")
+          e.updatePutDown(body, packet)
+          if (debug) println(s"PutDown($packet) of $body is performed")
           directory.adr(bodyId) ! Success
           if (e.nbScatteredPackets == 0){
             if (debug) println(s"No more packets")
@@ -186,7 +186,7 @@ class Simulator(val e: Environment, val delay : Int = 0) extends Actor{
     }
   }
 
-  def killAgents(directory : Directory) = {
+  def killAgents(directory : Directory) : Unit = {
     runner ! Outcome(steps)
     directory.allAgents().foreach( _ ! Kill)
   }

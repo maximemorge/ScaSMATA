@@ -1,7 +1,7 @@
 // Copyright (C) Maxime MORGE 2018
 package org.scasmata.actor
 
-import org.scasmata.environment.{Environment,Direction,Color}
+import org.scasmata.environment.{Environment,Direction,Packet}
 
 /**
   * ManagingMessage
@@ -25,7 +25,7 @@ case object Ready extends Message // The agent is ready to talk to the other age
 abstract class ObservationMessage extends Message
 case object Observe extends ObservationMessage // The agent observe the environment throught the scheduler
 case class Update(environment : Environment) extends ObservationMessage // The agent is informed about the environment state
-case class Inform(targets : Seq[Int]) extends  ObservationMessage// The agents informs the simulator about its targets
+case class Inform(targets: Seq[Packet]) extends  ObservationMessage// The agents informs the simulator about its targets
 
 /**
   * Influence
@@ -34,10 +34,10 @@ abstract class Influence // The agent want to
 case class Move(direction : Direction) extends Influence() { // move toward a particular direction
   override def toString: String = s"Move($direction)"
 }
-case class PickUp(idPacket : Int) extends Influence() { // pick up a particular packet
-  override def toString: String = s"PickUp(packet$idPacket)"
+case class PickUp(packet: Packet) extends Influence() { // pick up a particular packet
+  override def toString: String = s"PickUp(packet$packet)"
 }
-case class PutDown(idPacket : Int) extends Influence() { // put down a particular packet in a colored destination
+case class PutDown(packet: Packet) extends Influence() { // put down a particular packet in a colored destination
   override def toString: String = s"PutDown(packet)"
 }
 

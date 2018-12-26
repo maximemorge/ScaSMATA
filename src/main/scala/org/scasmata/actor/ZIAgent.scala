@@ -4,7 +4,7 @@ package org.scasmata.actor
 import java.util.concurrent.ThreadLocalRandom
 
 import akka.actor.{Actor, ActorRef, FSM, Stash}
-import org.scasmata.environment.{Center, Environment}
+import org.scasmata.environment.{Environment, Packet}
 
 /**
   * States of the agent
@@ -18,7 +18,7 @@ case object Initial extends State
   * @param load  packetId it owns, 0 otherwise
   * @param attempt last influence emitted
   */
-class Mind(val perception: Environment, val load: Int, val attempt: Influence, val targets: Seq[Int])
+class Mind(val perception: Environment, val load: Option[Packet], val attempt: Option[Influence], val targets: Seq[Packet])
 
 
 /**
@@ -32,7 +32,7 @@ abstract class Agent(id : Int) extends Actor with FSM[State, Mind]  with Stash w
   /**
     * Initiates a myopic agent which owns no packet
     */
-  startWith(Initial,  new Mind(null, 0, null, null))
+  startWith(Initial,  new Mind( perception = null, load = None, attempt = None, targets = Nil))
 
   /**
     * Whatever the state is
@@ -75,12 +75,12 @@ class ZIAgent(id : Int) extends Agent(id) with FSM[State, Mind]
   when(Initial) {
     // If the perception is updated
     case Event(Update(e), mind) =>
-      val updatedMind = new Mind(e, mind.load, mind.attempt, null)
+      val updatedMind = new Mind(e, mind.load, mind.attempt, targets = Nil)
       if (debug) println(s"Agent$id is updated")
       val nextInfluence = decide(id, updatedMind)
       if (debug) println(s"Agent$id decides $nextInfluence")
       sender ! nextInfluence
-      stay using new Mind(e, mind.load, nextInfluence, null)
+      stay using new Mind(e, mind.load, Some(nextInfluence), targets = Nil)
 
       // If the last influence is successful
     case Event(Success, mind) =>
@@ -88,9 +88,9 @@ class ZIAgent(id : Int) extends Agent(id) with FSM[State, Mind]
       if (debug) println(s"Agent$id observes")
       sender ! Observe
       stay using (mind.attempt match {
-        case PickUp(idPacket) => new Mind(mind.perception, idPacket, null, null)
-        case PutDown(_) => new Mind(mind.perception, 0, null, null)
-        case _ => new Mind(mind.perception, mind.load, null, null)
+        case Some(PickUp(packet)) => new Mind(mind.perception, load = Some(packet), attempt = None, targets = Nil)
+        case Some(PutDown(_)) => new Mind(mind.perception, load = None , attempt = None, targets = Nil)
+        case _ => new Mind(mind.perception, mind.load, attempt = None, targets = Nil)
       })
 
       // If the previous influence is failed
@@ -124,7 +124,7 @@ class CleverAgent(id : Int) extends Agent(id) with FSM[State, Mind]
       val nextInfluence = decide(id, updatedMind)
       if (debug) println(s"Agent$id decides $nextInfluence")
       sender ! nextInfluence
-      stay using new Mind(e, mind.load, nextInfluence, targets)
+      stay using new Mind(e, mind.load, Some(nextInfluence), targets)
 
     // If the last influence is successful
     case Event(Success, mind) =>
@@ -132,16 +132,16 @@ class CleverAgent(id : Int) extends Agent(id) with FSM[State, Mind]
       if (debug) println(s"Agent$id observes")
       sender ! Observe
       stay using (mind.attempt match {
-        case PickUp(idPacket) =>
+        case Some(PickUp(packet)) =>
           val newTarget = mind.targets match{
             case Nil => Nil
             case _ => mind.targets.tail
           }
-          new Mind(mind.perception, idPacket, null, newTarget)
-        case PutDown(_) =>
-          new Mind(mind.perception, 0, null, mind.targets)
+          new Mind(mind.perception, load = Some(packet), attempt = None, newTarget)
+        case Some(PutDown(_)) =>
+          new Mind(mind.perception, load = None, attempt = None, mind.targets)
         case _ =>
-          new Mind(mind.perception, mind.load, null, mind.targets)
+          new Mind(mind.perception, mind.load, attempt = None, mind.targets)
       })
 
     // If the previous influence is failed

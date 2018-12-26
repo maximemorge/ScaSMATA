@@ -43,7 +43,12 @@ case object Brown extends Color{
   * Companion object
   */
 object Color {
+  // Mapping between agentId and color
   val MAPPING = Map(1->Red, 2->Green, 3->Blue, 4 -> Black)
+
+  /**
+    * Returns the color which mixes the color c1 and the color c2
+    */
   def mix(c1: Color, c2: Color) : Color ={
     (c1,c2) match {
       case (Red,Green) => RedGreen
@@ -62,6 +67,5 @@ object Color {
         new RuntimeException("Undefined mix color")
         Brown
     }
-}
-
+  }
 }

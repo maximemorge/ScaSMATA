@@ -133,7 +133,7 @@ class Dijkstra(e : Environment, oi : Int, oj : Int) {
   /**
     * Print the distance matrix
     */
-  def printDistances() ={
+  def printDistances() : Unit ={
     for (i <- 0 until e.height) {
       for (j <- 0 until e.width) {
         val sd = if (distance(i)(j) == Int.MaxValue) "+∞" else "%02d".format(distance(i)(j))
