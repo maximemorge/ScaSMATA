@@ -17,10 +17,10 @@ class Cell(i: Int, j : Int)extends Publisher{
   // The cell content is an entity, i.e. a body or a packet or a destination, eventually none
   var content : Option[Entity] = None
 
-  override def toString: String = content match {
-    case Some(e) => s"|$e"
-    case None => "|"+"".formatted(s"%${Entity.size}s")
-  }
+  override def toString: String = "|"+(content match {
+    case Some(e) => s"$e"
+    case None => " "
+  }).formatted(s"%${Cell.CELL_SIZE}s")
 
   /**
     * Returns the cell representation within a label with an icon
@@ -93,5 +93,11 @@ class Cell(i: Int, j : Int)extends Publisher{
     case Some(_: Destination) => true
     case _ => false
   }
+}
 
+/**
+  * Companion object for class variable
+  */
+object Cell{
+val CELL_SIZE = 8
 }

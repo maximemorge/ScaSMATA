@@ -11,6 +11,7 @@ import akka.util.Timeout
 import scala.concurrent.duration._
 import scala.language.postfixOps
 import org.scasmata.environment.{Center, Environment}
+import org.scasmata.simulator
 import org.scasmata.simulator.agent.ProactiveAgent
 
 /**
@@ -143,49 +144,67 @@ class Simulator(val e: Environment, val delay : Int = 0) extends Actor{
     * Process each influence according to the physical laws of the environment
     */
   def react() : Unit = {
-    influences.map{
-      case (bodyId,Move(direction)) =>
-        val body = e.bodies(bodyId)
-        if (!e.isPossibleDirection(body,direction)){
-          if (debug) println(s"Move($direction) of $bodyId is impossible")
-          directory.adr(bodyId) ! Failure
-        }
-        else{
-          e.updateMove(body,direction)
-          if (debug) println(s"Move($direction) of $bodyId is performed")
-          directory.adr(bodyId) ! Success
-        }
+    val pickUps = influences.collect{ case (id, influence: PickUp) => (id, influence) }
+    val putDowns = influences.collect{ case (id, influence : PutDown) => (id, influence) }
+    val moves = influences.collect { case (id, influence : Move) => (id, influence) }
 
-      case (bodyId,PickUp(packet)) =>
-        val body = e.bodies(bodyId)
+    // 1 - process pick up
+    pickUps.foreach{
+      case (id,PickUp(packet)) =>
+        val body = e.bodies(id)
         if (packet.size > 1 || body.load.isDefined || ! e.closedPacket(body,packet)) {
-          if (debug) println(s"Pickup(${packet.id} of $bodyId is failed")
-          directory.adr(bodyId) ! Failure
+          if (debug) println(s"Pickup(packet) by $body failure")
+          directory.adr(id) ! Failure
         }
         else {
           e.updatePickUp(body, packet)
-          if (debug) println(s"Pickup(${packet.id} of $bodyId is performed")
-          directory.adr(bodyId) ! Success
+          if (debug) println(s"Pickup(packet) by $body success")
+          directory.adr(id) ! Success
         }
+      case (id,influence) =>
+        val body = e.bodies(id)
+        throw new RuntimeException(s"$influence by $body was not excepted")
+    }
 
-      case (bodyId, PutDown(packet)) =>
-        val body = e.bodies(bodyId)
+    //2 - process put down
+    putDowns.foreach{
+      case (id, PutDown(packet)) =>
+        val body = e.bodies(id)
         if (!body.load.contains(packet) ||  !e.closedDestination(body)) {
-          if (debug) println(s"PutDown($packet) of $body is failed")
-          directory.adr(bodyId) ! Failure
+          if (debug) println(s"PutDown($packet) by $body failure")
+          directory.adr(id) ! Failure
         }
         else {
           e.updatePutDown(body, packet)
-          if (debug) println(s"PutDown($packet) of $body is performed")
-          directory.adr(bodyId) ! Success
+          if (debug) println(s"PutDown($packet) by $body success")
+          directory.adr(id) ! Success
           if (e.nbScatteredPackets == 0){
-            if (debug) println(s"No more packets")
+            if (debug) println(s"There is no more packets")
             killAgents(directory)
           }
           if (debug) println(s"There is still packets")
         }
-      case (bodyId,influence) =>
-        new RuntimeException(s"Reactor: $influence by $bodyId was not excepted")
+      case (id,influence) =>
+        val body = e.bodies(id)
+        throw new RuntimeException(s"$influence by $body was not excepted")
+    }
+
+    //3 - process moves
+    moves.foreach{
+      case (id,Move(direction)) =>
+        val body = e.bodies(id)
+        if (!e.isPossibleDirection(body,direction)){
+          if (debug) println(s"Move($direction) by $body fails")
+          directory.adr(id) ! Failure
+        }
+        else{
+          e.updateMove(body,direction)
+          if (debug) println(s"Move($direction) of $body is performed")
+          directory.adr(id) ! Success
+        }
+      case (id,influence) =>
+        val body = e.bodies(id)
+        throw new RuntimeException(s"$influence by $body was not excepted")
     }
   }
 

@@ -12,7 +12,7 @@ import scala.util.Random
   * @param maxSizePackets maximal size of the packets (2 by default)
   */
 class Environment(val height: Int, val width: Int, val n: Int = 1, val m: Int = 1, val minSizePackets: Int = 1, val maxSizePackets: Int = 2) {
-  val debug = false
+  val debug = true
 
   //Create the grid and the maps of packets/bodies
   private val grid = Array.ofDim[Cell](height, width)
@@ -113,6 +113,10 @@ class Environment(val height: Int, val width: Int, val n: Int = 1, val m: Int = 
     }).toIterable.filter(_.isDefined).map(_.get)
   }*/
 
+  /**
+    * Returns true if the cell (i,j) is accessible, i.e. empty or contains a body
+    */
+  def isAccessible(i: Int, j: Int):  Boolean =  get(i,j).isAccessible
 
   /**
     * Returns the list of packets by size
@@ -191,10 +195,10 @@ class Environment(val height: Int, val width: Int, val n: Int = 1, val m: Int = 
   def isPossibleDirection(body : Body, d :Direction) : Boolean = {
     val (i,j) = location(body)
     d match {
-      case North => i>0 && isEmpty(i-1,j)
-      case West => j>0 && isEmpty(i,j-1)
-      case South => i<height-1 && isEmpty(i+1,j)
-      case East => j<width-1 && isEmpty(i,j+1)
+      case North => i>0 && isAccessible(i-1,j)
+      case West => j>0 && isAccessible(i,j-1)
+      case South => i<height-1 && isAccessible(i+1,j)
+      case East => j<width-1 && isAccessible(i,j+1)
       case Center => true
     }
   }
@@ -204,10 +208,6 @@ class Environment(val height: Int, val width: Int, val n: Int = 1, val m: Int = 
     */
   def updateMove(body: Body, d: Direction) : Unit = {
     val (i,j) = location(body)
-    if (!isPossibleDirection(body, d))
-      new RuntimeException(s"Move to $d from ($i,$j) is impossible")
-    val entity = grid(i)(j).content
-    grid(i)(j).setContent(None)
     val (k,l) = d match {
       case East => (i,j+1)
       case North => (i-1,j)
@@ -215,7 +215,10 @@ class Environment(val height: Int, val width: Int, val n: Int = 1, val m: Int = 
       case South => (i+1,j)
       case Center => (i,j)
     }
-    grid(k)(l).setContent(entity)
+    val c1 = grid(i)(j).content
+    val c2 = grid(k)(l).content
+    grid(i)(j).setContent(c2)
+    grid(k)(l).setContent(c1)
   }
 
   /**

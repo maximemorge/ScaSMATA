@@ -13,7 +13,7 @@ object Entity{
   * Destination where to put packets
   */
 case class Destination() extends Entity{
-  override def toString: String = "D".formatted(s"%${Entity.size}s")
+  override def toString: String = "D"
 }
 
 /**
@@ -22,7 +22,7 @@ case class Destination() extends Entity{
   * @param load the body carries on a packet, eventually non
   */
 case class Body(id: Int, var load: Option[Packet] = None) extends Entity{
-  override def toString: String = s"B$id$load".formatted(s"%${Entity.size}s")
+  override def toString: String = s"B$id($load)"
 
   /**
     * Returns the cost of the current load, i.e
@@ -62,7 +62,7 @@ case class Body(id: Int, var load: Option[Packet] = None) extends Entity{
   * A packet has an id and a size, eventually a color if it is targeted by an agent
   */
 case class Packet(id: Int, size: Int, var color: Color = Brown) extends Entity{
-  override def toString: String = s"P$id($size)".formatted(s"%${Entity.size}s")
+  override def toString: String = s"P$id($size)"
   /**
     * Two packets are equals if they have the same id
     */
