@@ -2,7 +2,7 @@
 Scalable Situated Multi-Agent Task Allocation
 ## What is ScaSMATA ?
 
-ScaMATA is a library of algorithms which aim at allocating some tasks to some situated agents.
+ScaSMATA is a library of algorithms which aim at allocating some tasks to some situated agents.
 
 We have implemented our prototype with the
 [Scala](https://www.scala-lang.org/) programming language and the
@@ -21,7 +21,7 @@ world. An agent can pick up a packet and put it down. The job efficiency
 represents the number of steps, packet manipulations and message exchanges. 
 The "heavy packets" must be manipulated simultaneously by at most two agents. 
 
-[![Screencast](snapshot.png)](https://youtu.be/_k2cTFNJZLo)
+[![Screencast](snapshot.png)](https://youtu.be/GvHtauhrkg4)
 
 ## Requirements
 

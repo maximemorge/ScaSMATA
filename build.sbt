@@ -1,6 +1,6 @@
 name := "ScaSMATA"
 
-version := "0.1"
+version := "0.2"
 
 mainClass in (Compile,run) := Some("org.scasmata.util.Main")
 mainClass in assembly := Some("org.scasmata.util.Main")

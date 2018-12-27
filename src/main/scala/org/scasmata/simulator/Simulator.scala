@@ -192,7 +192,7 @@ class Simulator(val e: Environment, val delay : Int = 0) extends Actor{
           e.updatePutDown(body, packet)
           if (debug) println(s"PutDown($packet) by $body success")
           directory.adr(id) ! Success
-          if (e.nbScatteredPackets == 0){
+          if (e.isClean()){
             if (debug) println(s"There is no more packets")
             return true
           }
@@ -207,7 +207,7 @@ class Simulator(val e: Environment, val delay : Int = 0) extends Actor{
     moves.foreach{
       case (id,Move(direction)) =>
         val body = e.bodies(id)
-        if (!e.isPossibleDirection(body,direction)){
+        if (!e.isAccessibleDirection(body,direction)){
           if (debug) println(s"Move($direction) by $body failed")
           directory.adr(id) ! Failure
         }

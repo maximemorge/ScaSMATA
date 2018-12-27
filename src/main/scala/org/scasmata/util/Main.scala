@@ -16,7 +16,7 @@ import org.scasmata.environment.Environment
   */
 object Main{
   def main(args: Array[String]): Unit = {
-    val e = new Environment(height = 8, width = 16, n = 2, m = 8, minSizePackets = 1, maxSizePackets = 1)
+    val e = new Environment(height = 8, width = 16, n = 4, m = 8, minSizePackets = 1, maxSizePackets = 1)
     val system = ActorSystem("ScaSMATASolver") //The Actor system
     system.actorOf(Props(classOf[UI], e), "UI")//Run simulator
   }

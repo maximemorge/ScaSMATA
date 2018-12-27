@@ -20,9 +20,13 @@ class Environment(val height: Int, val width: Int, val n: Int = 1, val m: Int = 
     grid(i)(j) = new Cell(i,j)
   var packets = Map[Int,Packet]()
   var bodies  = Map[Int,Body]()
-  // Number of packets which are still available to be picked up in the environment
-  def nbScatteredPackets : Int= packets.keys.size
+  // Number of packets which are putted down
+  private var nbCollectedPackets = 0
 
+  /**
+    * Returns true if all the packets are collected
+    */
+  def isClean() : Boolean = nbCollectedPackets == m
 
   //Initiate a random environment
   init()
@@ -35,6 +39,7 @@ class Environment(val height: Int, val width: Int, val n: Int = 1, val m: Int = 
       grid(i)(j).setContent(None)
     packets = Map[Int,Packet]()
     bodies  = Map[Int,Body]()
+    nbCollectedPackets = 0
   }
   /**
     * Initiate a random environment such as each entity has no neighbor,
@@ -99,6 +104,7 @@ class Environment(val height: Int, val width: Int, val n: Int = 1, val m: Int = 
     }
     s
   }
+
 
   /**
     * Returns true if the cell (i,j) is empty
@@ -191,9 +197,9 @@ class Environment(val height: Int, val width: Int, val n: Int = 1, val m: Int = 
   }
 
   /**
-    * Returns true if a move is possible
+    * Returns true if a move is possible, i.e. not in a destination or a packet
     */
-  def isPossibleDirection(body : Body, d :Direction) : Boolean = {
+  def isAccessibleDirection(body : Body, d :Direction) : Boolean = {
     val (i,j) = location(body)
     d match {
       case North => i>0 && isAccessible(i-1,j)
@@ -240,6 +246,7 @@ class Environment(val height: Int, val width: Int, val n: Int = 1, val m: Int = 
   def updatePutDown(body: Body, packet: Packet): Unit = {
     val (i,j) = location(body)
     body.unload()
+    nbCollectedPackets +=1
     grid(i)(j).setContent(Some(body))
   }
 

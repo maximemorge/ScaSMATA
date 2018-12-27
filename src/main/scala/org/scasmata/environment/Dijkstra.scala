@@ -86,7 +86,7 @@ class Dijkstra(e : Environment, oi : Int, oj : Int) {
       // find the closest cell
       val (i,j) = findMinDistanceUnexploredCell()
       unexplored = unexplored.filterNot(_ ==(i,j))
-      if (e.get(i,j).isEmpty || (i,j) == (oi,oj)){// If the cell is reachable (which is empty or contains the agent)
+      if (e.get(i,j).isAccessible || (i,j) == (oi,oj)){// If the cell is reachable (which is empty or contains the agent)
         // update the distance and the predecessor relation between the cell and the neighbor (by moving)
         if (i>0) updateDistancePredecessor((i,j), (i-1,j))
         if (j>0) updateDistancePredecessor((i,j), (i,j-1))
