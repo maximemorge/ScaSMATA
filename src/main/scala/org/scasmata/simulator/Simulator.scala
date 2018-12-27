@@ -1,15 +1,17 @@
 // Copyright (C) Maxime MORGE 2018
-package org.scasmata.actor
+package org.scasmata.simulator
 
 import scala.concurrent.duration.FiniteDuration
 import akka.actor.{Actor, ActorRef, Props}
 import akka.pattern.ask
+
 import scala.concurrent.Await
 import akka.util.Timeout
+
 import scala.concurrent.duration._
 import scala.language.postfixOps
-
-import org.scasmata.environment.{Center, Environment, AgentBody}
+import org.scasmata.environment.{Center, Environment}
+import org.scasmata.simulator.agent.ProactiveAgent
 
 /**
   * Simulator which :
@@ -22,24 +24,24 @@ import org.scasmata.environment.{Center, Environment, AgentBody}
 class Simulator(val e: Environment, val delay : Int = 0) extends Actor{
   val debug = true
 
-  val TIMEOUT_VALUE: FiniteDuration = 1 seconds // Default timeout of step
+  val TIMEOUT_VALUE: FiniteDuration = 1 seconds // Default timeout of starting agent
   implicit val timeout: Timeout = Timeout(TIMEOUT_VALUE)
   var pause = false
 
   var runner : ActorRef= context.parent // The actor which triggers the simulation and gathers the steps
-  var directory = new Directory() // White page for bodyId/ActorRef
+  var directory = new Directory() // White page id/agent
   var nbReadyAgent = 0 // Number of agents which are ready to talk to each other
   var nbStoppedAgents = 0
   var step = 0 // Number of simulation steps
   var steps = Map[Int, Int]() // Number of steps performed by the agents
-  var influences = Map[Int, Influence]()
+  var influences = Map[Int, Influence]() // Map id/influence
 
   /**
     * Start simulator
     */
   e.bodies.values.foreach { body =>
     if (debug) println(s"Simulator creates an agent for body ${body.id}")
-    val actor = context.actorOf(Props(classOf[CleverAgent], body.id), body.id.toString)
+    val actor = context.actorOf(Props(classOf[ProactiveAgent], body.id), body.id.toString)
     directory.add(body.id, actor) // Add it to the directory
   }
   // Initiation of the agents with the directory
@@ -73,7 +75,7 @@ class Simulator(val e: Environment, val delay : Int = 0) extends Actor{
         triggerTimerIfRequired()
       } else {
         // Otherwise wait for other actions
-        if (debug) println(s"Simulator: it waits for other influences")
+        if (debug) println(s"Simulator waits for other influences")
       }
 
     //When the simulator play next step
@@ -82,7 +84,7 @@ class Simulator(val e: Environment, val delay : Int = 0) extends Actor{
         triggerTimerIfRequired()
       } else {
         // Otherwise wait for other actions
-        if (debug) println(s"Simulator: it waits for other influences")
+        if (debug) println(s"Simulator waits for other influences")
       }
 
     //When the simulator is killed
@@ -107,12 +109,13 @@ class Simulator(val e: Environment, val delay : Int = 0) extends Actor{
       val bodyId = directory.id(sender)
       if (debug) println(s"Simulator receives $influence from $bodyId")
       influences = influences + (bodyId -> influence)
+      // Count the steps
       if (influence != Move(Center))  steps += (bodyId-> (steps.getOrElse(bodyId,0)+1))
       if (influences.keys.size == e.n && !pause) { // Compute reaction
         triggerTimerIfRequired()
       } else {
         // Otherwise wait for other actions
-        if (debug) println(s"Simulator: it waits for other influences or replay")
+        if (debug) println(s"Simulator waits for other influences or replay")
       }
 
     // When the timeout for the reaction is received
@@ -197,7 +200,7 @@ class Simulator(val e: Environment, val delay : Int = 0) extends Actor{
   */
 object Simulator {
   var id = 0
-  def nextId() = {
+  def nextId() : Int = {
     id += 1
     id
   }

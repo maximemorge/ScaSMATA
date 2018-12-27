@@ -9,17 +9,17 @@ import scala.language.postfixOps
 import scala.concurrent.duration._
 
 import org.scasmata.environment.Environment
-import org.scasmata.actor.{Simulator, Play, Outcome}
+import org.scasmata.simulator.{Simulator, Play, Outcome}
 
 /**
   * Main application without UI
   */
 object MainWithoutUI{
   def main(args: Array[String]): Unit = {
-    val TIMEOUTVALUE : FiniteDuration = 6000 minutes // Default timeout of a run
-    implicit val timeout : Timeout = Timeout(TIMEOUTVALUE)
+    val TIMEOUT_VALUE : FiniteDuration = 6000 minutes // Default timeout of a run
+    implicit val timeout : Timeout = Timeout(TIMEOUT_VALUE)
     val e = new Environment(height = 4, width = 8, minSizePackets = 1)
-    val system = ActorSystem("ScaSMATASolver") //The Actor system
+    val system = ActorSystem("Solver") //The Actor system
     val simulator = system.actorOf(Props(classOf[Simulator], e, 0), "Simulator")
     val future = simulator ? Play
     val result = Await.result(future, timeout.duration).asInstanceOf[Outcome]

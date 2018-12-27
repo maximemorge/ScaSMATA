@@ -5,17 +5,13 @@ import scala.swing._
 import java.awt.Color
 
 import scala.swing.event.ValueChanged
-import akka.actor.{Actor, ActorSystem, Props}
+import akka.actor.{Actor, Props}
 import akka.util.Timeout
-
 import scala.language.postfixOps
 import scala.concurrent.duration._
-import akka.pattern.ask
-import javafx.scene.control.Slider
 
-import scala.concurrent.Await
 import org.scasmata.environment._
-import org.scasmata.actor._
+import org.scasmata.simulator._
 
 /**
   * Class representing the user interface
@@ -28,17 +24,16 @@ class UI(val e: Environment) extends Actor {
 
   val mainFrame = new MainFrame(){
     title = "ScaSMATA (Scalable Situated Multi-Agent Task Allocation) GUI"
-    val TIMEOUTVALUE: FiniteDuration = 6000 minutes // Default timeout of a run
-    implicit val timeout: Timeout = Timeout(TIMEOUTVALUE)
+    val TIMEOUT_VALUE: FiniteDuration = 6000 minutes // Default timeout of a run
+    implicit val timeout: Timeout = Timeout(TIMEOUT_VALUE)
 
     var isRunning = 0 // 0 if never played, 1 if pause, 2 if replayed
-    private val boardSquares =
-    Array.ofDim[Label](e.height, e.width)
+    private val boardSquares = Array.ofDim[Label](e.height, e.width)
     // North : button
-    private val toolPanel =
+    private val toolPanel : BoxPanel =
     new BoxPanel(Orientation.Horizontal) {
       contents += Button("New") {
-        e.reinit()
+        e.reInit()
         simulator = context.actorOf(Props(classOf[Simulator], e, delay), "Simulator" + Simulator.nextId) //Run simulator with 250ms of delay
         isRunning = 0
       }
@@ -58,7 +53,7 @@ class UI(val e: Environment) extends Actor {
         }
       }
 
-      val next = Button("Next") {
+      val next : Button = Button("Next") {
         emit(Next)
       }
       next.enabled = false
@@ -68,7 +63,7 @@ class UI(val e: Environment) extends Actor {
         sys.exit(0)
       }
 
-      val slider = new scala.swing.Slider() {
+      val slider : Slider = new scala.swing.Slider() {
         name = delay.toString
         min = 0
         max = 1000
@@ -113,11 +108,12 @@ class UI(val e: Environment) extends Actor {
   /**
     * Play the simulator
     */
-  def emit(msg : ManagingMessage) = simulator ! msg
+  def emit(msg : ManagingMessage) : Unit = simulator ! msg
+
   /**
     * Message handling
     **/
-  def receive = {
+  def receive : PartialFunction[Any,Unit] = {
     case Outcome(steps) =>
       var result = ""
       steps.foreach{
@@ -129,6 +125,5 @@ class UI(val e: Environment) extends Actor {
 
     case msg@_ =>
       println("Simulator: it receives a message which was not expected: " + msg)
-
   }
 }

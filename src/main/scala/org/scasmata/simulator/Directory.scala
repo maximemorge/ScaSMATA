@@ -1,5 +1,5 @@
 // Copyright (C) Maxime MORGE 2018
-package org.scasmata.actor
+package org.scasmata.simulator
 
 import akka.actor.ActorRef
 
@@ -27,5 +27,4 @@ class Directory {
   def allIds() : Iterable[Int]  = id.values
   def peers(bodyId: Int) : Set[Int] = allIds().filterNot(_ == bodyId).toSet
   def peersActor(bodyId: Int) :  Iterable[ActorRef] = peers(bodyId).map(id => adr(id))
-
 }

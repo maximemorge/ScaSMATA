@@ -1,5 +1,5 @@
 // Copyright (C) Maxime MORGE 2018
-package org.scasmata.actor
+package org.scasmata.simulator
 
 
 import akka.actor.{ Actor, ReceiveTimeout }
@@ -17,7 +17,7 @@ class Timer(duration: Int) extends Actor{
 
   /** Active state of the timer. */
   def active: Receive = {
-    // turn ot on
+    // turn it on
     case Wait =>
       context.setReceiveTimeout(Duration(this.duration, MILLISECONDS))
 
@@ -31,14 +31,16 @@ class Timer(duration: Int) extends Actor{
   /** Handle unexpected messages */
   def handleUnexpected: Receive = {
     case msg@_ =>
-      new RuntimeException(s"Timer: $msg by $sender was not excepted")
+      new RuntimeException(s"Timer receives $msg by $sender which was not excepted")
   }
 }
 
-
+/**
+  * Companion object for class variable
+  */
 object Timer {
   var id = 0
-  def nextId() = {
+  def nextId() : Int = {
     id += 1
     id
   }

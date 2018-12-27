@@ -1,5 +1,5 @@
 // Copyright (C) Maxime MORGE 2018
-package org.scasmata.actor
+package org.scasmata.simulator
 
 import org.scasmata.environment.{Environment,Direction,Packet}
 
@@ -23,7 +23,7 @@ case object Go extends ManagingMessage // Timeout from a timer
 abstract class Message
 case object Ready extends Message // The agent is ready to talk to the other agents
 abstract class ObservationMessage extends Message
-case object Observe extends ObservationMessage // The agent observe the environment throught the scheduler
+case object Observe extends ObservationMessage // The agent observe the environment through the simulator
 case class Update(environment : Environment) extends ObservationMessage // The agent is informed about the environment state
 case class Inform(targets: Seq[Packet]) extends  ObservationMessage// The agents informs the simulator about its targets
 

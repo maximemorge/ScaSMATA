@@ -19,7 +19,7 @@ class Environment(val height: Int, val width: Int, val n: Int = 1, val m: Int = 
   for (i <- 0 until height; j <- 0 until width)
     grid(i)(j) = new Cell(i,j)
   var packets = Map[Int,Packet]()
-  var bodies  = Map[Int,AgentBody]()
+  var bodies  = Map[Int,Body]()
   // Number of packets which are still available to be picked up in the environment
   def nbScatteredPackets : Int= packets.keys.size
 
@@ -34,7 +34,7 @@ class Environment(val height: Int, val width: Int, val n: Int = 1, val m: Int = 
     for (i <- 0 until height; j <- 0 until width)
       grid(i)(j).setContent(None)
     packets = Map[Int,Packet]()
-    bodies  = Map[Int,AgentBody]()
+    bodies  = Map[Int,Body]()
   }
   /**
     * Initiate a random environment such as each entity has no neighbor,
@@ -51,7 +51,7 @@ class Environment(val height: Int, val width: Int, val n: Int = 1, val m: Int = 
       val (i, j) = coordinates.remove(random.nextInt(coordinates.length))
       coordinates --= Seq((i,j-1),(i,j+1),(i-1,j+1))
       if (debug) println(s"Add body in ($i, $j)")
-      val newBody = AgentBody(id = idBody)
+      val newBody = Body(id = idBody)
       bodies += (idBody -> newBody)
       grid(i)(j).setContent(Some(newBody))
     }
@@ -75,7 +75,7 @@ class Environment(val height: Int, val width: Int, val n: Int = 1, val m: Int = 
   /**
     * Clear and initiate a random environment
     */
-  def reinit() : Unit ={
+  def reInit() : Unit ={
     reset()
     init()
   }
@@ -103,9 +103,7 @@ class Environment(val height: Int, val width: Int, val n: Int = 1, val m: Int = 
     * Returns true if the cell (i,j) is empty
     */
   def isEmpty(i: Int, j: Int):  Boolean =  get(i,j).isEmpty
-
-  /*
-    * Returns the list of bodies
+  /* Returns the list of bodies
   def bodies() : Iterable[AgentBody] = {
     (for (j <- 0 until width; i <- 0 until height) yield {
       grid(i)(j).content match {
@@ -115,44 +113,23 @@ class Environment(val height: Int, val width: Int, val n: Int = 1, val m: Int = 
     }).toIterable.filter(_.isDefined).map(_.get)
   }*/
 
-  /*
-    * Returns the body with a particular id
-  def body(id: Int) : AgentBody = {
-    for (j <- 0 until width; i <- 0 until height){
-      grid(i)(j).content match {
-        case body : AgentBody if body.id == id => return body
-        case _ => None
-      }
-    }
-    new RuntimeException(s"Body $id is not in the environment")
-    AgentBody(0)
-  }*/
 
   /**
     * Returns the list of packets by size
     */
   def packetsOfSize(size : Int) : Iterable[Packet] = packets.values.filter(_.size == size)
-  /*def packets(size : Int) : Iterable[Packet] = {
-    (for (j <- 0 until width; i <- 0 until height) yield {
-      grid(i)(j).content match {
-        case packet : Some[Packet] if packet.size == size => packet
-        case _ => None
-      }
-    }).toIterable.filter(_.isDefined).map(_.get)
-  }*/
 
   /**
     * Returns the coordinates of the body
     */
-  def location(body: AgentBody): (Int,Int) = {
+  def location(body: Body): (Int,Int) = {
     for (j <- 0 until width; i <- 0 until height) {
       grid(i)(j).content match {
         case Some(content) if body == content => return (i, j)
         case _ =>
       }
     }
-    new RuntimeException(s"Body $body is not in the environment")
-    (-1,-1)
+    throw new RuntimeException(s"Body $body is not in the environment")
   }
 
 
@@ -211,7 +188,7 @@ class Environment(val height: Int, val width: Int, val n: Int = 1, val m: Int = 
   /**
     * Returns true if a move is possible
     */
-  def isPossibleDirection(body : AgentBody, d :Direction) : Boolean = {
+  def isPossibleDirection(body : Body, d :Direction) : Boolean = {
     val (i,j) = location(body)
     d match {
       case North => i>0 && isEmpty(i-1,j)
@@ -225,7 +202,7 @@ class Environment(val height: Int, val width: Int, val n: Int = 1, val m: Int = 
   /**
     * Updates the environment with a move
     */
-  def updateMove(body: AgentBody, d: Direction) : Unit = {
+  def updateMove(body: Body, d: Direction) : Unit = {
     val (i,j) = location(body)
     if (!isPossibleDirection(body, d))
       new RuntimeException(s"Move to $d from ($i,$j) is impossible")
@@ -244,7 +221,7 @@ class Environment(val height: Int, val width: Int, val n: Int = 1, val m: Int = 
   /**
     * Updates the environment when a body pick up the environment
     */
-  def updatePickUp(body: AgentBody, packet: Packet): Unit = {
+  def updatePickUp(body: Body, packet: Packet): Unit = {
     val (i,j) = location(body)
     val (x,y) = location(packet)
     grid(x)(y).setContent(None)
@@ -256,7 +233,7 @@ class Environment(val height: Int, val width: Int, val n: Int = 1, val m: Int = 
   /**
     * Updates the environment when a body pick up the environment
     */
-  def updatePutDown(body: AgentBody, packet: Packet): Unit = {
+  def updatePutDown(body: Body, packet: Packet): Unit = {
     val (i,j) = location(body)
     body.unload()
     grid(i)(j).setContent(Some(body))
@@ -275,7 +252,7 @@ class Environment(val height: Int, val width: Int, val n: Int = 1, val m: Int = 
   /**
     * Returns true if the destination is closed to the body
     */
-  def closedDestination(body: AgentBody): Boolean = {
+  def closedDestination(body: Body): Boolean = {
     val (i, j) = location(body)
     neighborhood(i, j).exists(c => c.hasDestination)
   }
@@ -283,7 +260,7 @@ class Environment(val height: Int, val width: Int, val n: Int = 1, val m: Int = 
   /**
     * Returns true if the body is closed to a packet
     */
-  def closedPacket(body: AgentBody): Boolean = {
+  def closedPacket(body: Body): Boolean = {
     val (i, j) = location(body)
     neighborhood(i, j).exists(c => c.hasPacket)
   }
@@ -291,7 +268,7 @@ class Environment(val height: Int, val width: Int, val n: Int = 1, val m: Int = 
   /**
     * Returns true if the body is closed to a packet
     */
-  def closedPacket(body: AgentBody, packet: Packet): Boolean = {
+  def closedPacket(body: Body, packet: Packet): Boolean = {
     val (i, j) = location(body)
     neighborhood(i, j).exists(c => c.hasPacket(packet))
   }

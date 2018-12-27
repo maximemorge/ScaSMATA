@@ -13,6 +13,8 @@ import scala.swing.event.ValueChanged
   */
 class Cell(i: Int, j : Int)extends Publisher{
   val debug = false
+
+  // The cell content is an entity, i.e. a body or a packet or a destination, eventually none
   var content : Option[Entity] = None
 
   override def toString: String = content match {
@@ -24,10 +26,11 @@ class Cell(i: Int, j : Int)extends Publisher{
     * Returns the cell representation within a label with an icon
     */
   def label() : Label = {
+    // path of the icon
     val path = (content match {
       case Some(Destination()) =>
         "brownPlace"
-      case Some(AgentBody(id,load)) =>
+      case Some(Body(id,load)) =>
         if (load.isEmpty) "fig"+id.toString
         else  "fig"+id.toString+"load"
       case Some(Packet(_,size,color)) =>
@@ -54,6 +57,17 @@ class Cell(i: Int, j : Int)extends Publisher{
     *  Returns true of the cell contains no entity
     */
   def isEmpty : Boolean = content.isEmpty
+
+  /**
+    * Returns true if the cell contains no moving entity
+    */
+  def isAccessible : Boolean = content match {
+    case None => true
+    case Some(_ : Body) => true
+    case Some(_ : Destination) => false
+    case Some(_ : Packet) => false
+    case _ => throw new RuntimeException("Unexpected content of cell")
+  }
 
   /**
     * Returns true if the cell contains a packet

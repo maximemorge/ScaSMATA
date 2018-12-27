@@ -45,10 +45,10 @@ class Dijkstra(e : Environment, oi : Int, oj : Int) {
   /**
     * Update the distance and the predecessor relation between a source and a destination
     */
-  def updateDistancePredecessor(source: (Int,Int), destination: (Int,Int)) = {
+  def updateDistancePredecessor(source: (Int,Int), destination: (Int,Int)) :Unit = {
     val (sx,sy) = source
     val (dx,dy) = destination
-    if (distance(dx)(dy) > distance(sx)(sy)+1 && e.get(dx,dy).isEmpty){ // If we find a shortest path
+    if (distance(dx)(dy) > distance(sx)(sy)+1 && e.get(dx,dy).isAccessible){ // If we find a shortest path
       // Update distance (dx,dy) and the predecessor
       distance(dx)(dy) = distance(sx)(sy)+1
       predecessor += (destination -> source)
@@ -81,8 +81,8 @@ class Dijkstra(e : Environment, oi : Int, oj : Int) {
     * Run Dijkstra algorithm
     */
   def run() =  {
-    // While there is a unexplored cell which is reachable (which is empty or contains the agent)
-    while(!unexplored.isEmpty && findMinDistanceUnexploredCell() != (-1,-1)){
+    // While there is a unexplored cell which is reachable (which is available or contains the agent)
+    while(unexplored.nonEmpty && findMinDistanceUnexploredCell() != (-1,-1)){
       // find the closest cell
       val (i,j) = findMinDistanceUnexploredCell()
       unexplored = unexplored.filterNot(_ ==(i,j))
@@ -123,7 +123,7 @@ class Dijkstra(e : Environment, oi : Int, oj : Int) {
   def nextDirectionTo(dx: Int, dy: Int) : Direction = {
     updateTarget(dx,dy)
     val (i,j) = nextCellTo(dx,dy)
-    if (debug) println("The direction from the next step from ($oi,$oj) to ($dx,$dy) is ($i,$j)")
+    if (debug) println(s"The direction from the next step from ($oi,$oj) to ($dx,$dy) is ($i,$j)")
     if (i>oi) return South
     if (i<oi) return North
     if (j>oj) return East
@@ -137,7 +137,7 @@ class Dijkstra(e : Environment, oi : Int, oj : Int) {
     for (i <- 0 until e.height) {
       for (j <- 0 until e.width) {
         val sd = if (distance(i)(j) == Int.MaxValue) "+∞" else "%02d".format(distance(i)(j))
-        print(s"| $sd ")
+        print(s"| $sd ".formatted("%5s"))
       }
       println("|")
     }
