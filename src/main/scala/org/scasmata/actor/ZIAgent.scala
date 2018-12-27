@@ -58,6 +58,7 @@ abstract class Agent(id : Int) extends Actor with FSM[State, Mind]  with Stash w
       stay using mind
 
   }
+
   // Finally Triggering it up using initialize, which performs the transition into the initial state and sets up timers (if required).
   initialize()
 }

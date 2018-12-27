@@ -14,7 +14,6 @@ import scala.util.Random
 class Environment(val height: Int, val width: Int, val n: Int = 1, val m: Int = 1, val minSizePackets: Int = 1, val maxSizePackets: Int = 2) {
   val debug = false
 
-
   //Create the grid and the maps of packets/bodies
   private val grid = Array.ofDim[Cell](height, width)
   for (i <- 0 until height; j <- 0 until width)
@@ -70,6 +69,7 @@ class Environment(val height: Int, val width: Int, val n: Int = 1, val m: Int = 
     coordinates --= Seq((i,j-1),(i,j+1),(i-1,j+1))
     if (debug) println(s"Add destination in ($i, $j)")
     grid(i)(j).setContent(Some(Destination()))
+    if (debug) println(this.toString)
   }
 
   /**
@@ -92,9 +92,9 @@ class Environment(val height: Int, val width: Int, val n: Int = 1, val m: Int = 
     var s =""
     for (i <- 0 until height){
       for(j <- 0 until width){
-        s+=get(i,j)+toString
+        s+=grid(i)(j).toString
       }
-      s+"\n"
+      s+="| \n"
     }
     s
   }

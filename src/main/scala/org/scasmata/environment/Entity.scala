@@ -5,9 +5,12 @@ package org.scasmata.environment
   * Entity in the environment are bodies, packets, destination or nothing (if the cell is empty)
   */
 abstract class Entity
-case class Destination()
-  extends Entity{
-  override def toString: String = s"D   "
+object Entity{
+  val size = 7 // to print
+}
+
+case class Destination() extends Entity{
+  override def toString: String = "D".formatted(s"%${Entity.size}s")
 }
 
 /**
@@ -16,7 +19,7 @@ case class Destination()
   * @param load
   */
 case class AgentBody(id: Int, var load: Option[Packet] = None) extends Entity{
-  override def toString: String = "B"+id+load
+  override def toString: String = s"B$id$load".formatted(s"%${Entity.size}s")
 
   /**
     * Returns the cost of the current load
@@ -55,7 +58,7 @@ case class AgentBody(id: Int, var load: Option[Packet] = None) extends Entity{
   * A packet has an id and a size, eventually a color if it is targeted by an agent
   */
 case class Packet(id: Int, size: Int, var color: Color = Brown) extends Entity{
-  override def toString: String = s"P$id$size$color"
+  override def toString: String = s"P$id($size)".formatted(s"%${Entity.size}s")
   override def equals(that: Any): Boolean = {
     that match {
       case that: Packet => that.id == this.id

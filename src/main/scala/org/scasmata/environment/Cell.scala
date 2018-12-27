@@ -16,8 +16,8 @@ class Cell(i: Int, j : Int)extends Publisher{
   var content : Option[Entity] = None
 
   override def toString: String = content match {
-    case Some(e) => s"|$e|"
-    case None => "      "
+    case Some(e) => s"|$e"
+    case None => "|"+"".formatted(s"%${Entity.size}s")
   }
 
   /**
@@ -32,7 +32,7 @@ class Cell(i: Int, j : Int)extends Publisher{
         else  "fig"+id.toString+"load"
       case Some(Packet(_,size,color)) =>
         color.toString+size.toString
-      case None =>
+      case _ =>
         "nothing"
     }) + ".png"
     if (debug) println(s"Show image $path")
