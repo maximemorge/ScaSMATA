@@ -24,7 +24,6 @@ import org.scasmata.simulator.agent.ProactiveAgent
   * */
 class Simulator(val e: Environment, val delay : Int = 0) extends Actor{
   val debug = true
-
   val TIMEOUT_VALUE: FiniteDuration = 1 seconds // Default timeout of starting agent
   implicit val timeout: Timeout = Timeout(TIMEOUT_VALUE)
   var pause = false
@@ -122,7 +121,11 @@ class Simulator(val e: Environment, val delay : Int = 0) extends Actor{
     // When the timeout for the reaction is received
     case Go =>
       if (debug) println(s"Simulator: it computes the reactions")
-      react()
+      val finished = react()
+      if (debug) println(s"Stop $finished")
+      if (finished) {
+        stop()
+      }
       influences = Map[Int, Influence]()
       step += 1
 
@@ -141,9 +144,20 @@ class Simulator(val e: Environment, val delay : Int = 0) extends Actor{
   }
 
   /**
-    * Process each influence according to the physical laws of the environment
+    *
+    * @param directory
     */
-  def react() : Unit = {
+  def stop() : Unit = {
+    if (debug) println("Simulator ends")
+    runner ! Outcome(steps)
+    directory.allAgents().foreach( _ ! Kill)
+  }
+
+  /**
+    * Process each influence according to the physical laws of the environment
+    * Returns true if all the packets are collected, false otherwise
+    */
+  def react() : Boolean = {
     val pickUps = influences.collect{ case (id, influence: PickUp) => (id, influence) }
     val putDowns = influences.collect{ case (id, influence : PutDown) => (id, influence) }
     val moves = influences.collect { case (id, influence : Move) => (id, influence) }
@@ -180,7 +194,7 @@ class Simulator(val e: Environment, val delay : Int = 0) extends Actor{
           directory.adr(id) ! Success
           if (e.nbScatteredPackets == 0){
             if (debug) println(s"There is no more packets")
-            killAgents(directory)
+            return true
           }
           if (debug) println(s"There is still packets")
         }
@@ -194,24 +208,21 @@ class Simulator(val e: Environment, val delay : Int = 0) extends Actor{
       case (id,Move(direction)) =>
         val body = e.bodies(id)
         if (!e.isPossibleDirection(body,direction)){
-          if (debug) println(s"Move($direction) by $body fails")
+          if (debug) println(s"Move($direction) by $body failed")
           directory.adr(id) ! Failure
         }
         else{
           e.updateMove(body,direction)
-          if (debug) println(s"Move($direction) of $body is performed")
+          if (debug) println(s"Move($direction) of $body success")
           directory.adr(id) ! Success
         }
       case (id,influence) =>
         val body = e.bodies(id)
         throw new RuntimeException(s"$influence by $body was not excepted")
     }
+    false
   }
 
-  def killAgents(directory : Directory) : Unit = {
-    runner ! Outcome(steps)
-    directory.allAgents().foreach( _ ! Kill)
-  }
 }
 
 /**

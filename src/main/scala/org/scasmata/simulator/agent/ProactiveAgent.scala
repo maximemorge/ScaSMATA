@@ -30,7 +30,7 @@ class ProactiveAgent(id : Int) extends Agent(id) with FSM[State, Mind]
 
     // If the last influence is successful
     case Event(Success, mind) =>
-      if (debug) println(s"Agent$id is informed that its previous influence failed")
+      if (debug) println(s"Agent$id is informed that its previous influence success")
       if (debug) println(s"Agent$id observes")
       sender ! Observe
       stay using (mind.attempt match {

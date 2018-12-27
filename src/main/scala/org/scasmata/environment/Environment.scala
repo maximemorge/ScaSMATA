@@ -12,7 +12,7 @@ import scala.util.Random
   * @param maxSizePackets maximal size of the packets (2 by default)
   */
 class Environment(val height: Int, val width: Int, val n: Int = 1, val m: Int = 1, val minSizePackets: Int = 1, val maxSizePackets: Int = 2) {
-  val debug = true
+  val debug = false
 
   //Create the grid and the maps of packets/bodies
   private val grid = Array.ofDim[Cell](height, width)
@@ -49,7 +49,8 @@ class Environment(val height: Int, val width: Int, val n: Int = 1, val m: Int = 
     for (k <- 0 until n){// Add n agent bodies
       idBody += 1
       val (i, j) = coordinates.remove(random.nextInt(coordinates.length))
-      coordinates --= Seq((i,j-1),(i,j+1),(i-1,j+1))
+      coordinates --= Seq((i,j-1),(i,j+1),(i-1,j),(i+1,j),(i-1,j+1),(i-1,j-1),(i+1,j-1),(i+1,j+1))
+      if (coordinates.isEmpty) throw new RuntimeException("Too many bodies in the environment")
       if (debug) println(s"Add body in ($i, $j)")
       val newBody = Body(id = idBody)
       bodies += (idBody -> newBody)
@@ -58,7 +59,8 @@ class Environment(val height: Int, val width: Int, val n: Int = 1, val m: Int = 
     for (k <- 0 until m){// Add m packets
       idPacket += 1
       val (i, j) = coordinates.remove(random.nextInt(coordinates.length))
-      coordinates --= Seq((i,j-1),(i,j+1),(i-1,j+1))
+      coordinates --= Seq((i,j-1),(i,j+1),(i-1,j),(i+1,j),(i-1,j+1),(i-1,j-1),(i+1,j-1),(i+1,j+1))
+      if (coordinates.isEmpty) throw new RuntimeException("Too many packets in the environment")
       if (debug) println(s"Add packet in ($i, $j)")
       val newPacket = Packet(id = idPacket, size = minSizePackets+random.nextInt(maxSizePackets))
       packets += (idPacket -> newPacket)
@@ -66,7 +68,6 @@ class Environment(val height: Int, val width: Int, val n: Int = 1, val m: Int = 
     }
     // Add the destination
     val (i, j) = coordinates.remove(random.nextInt(coordinates.length))
-    coordinates --= Seq((i,j-1),(i,j+1),(i-1,j+1))
     if (debug) println(s"Add destination in ($i, $j)")
     grid(i)(j).setContent(Some(Destination()))
     if (debug) println(this.toString)
