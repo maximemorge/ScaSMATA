@@ -24,37 +24,31 @@ class Mind(val perception: Environment, val load: Option[Packet], val attempt: O
   * Agent behaviour
   * @param id of its body
   */
-abstract class Agent(id : Int) extends Actor with FSM[State, Mind]  with Stash with DecisionRule  {
+abstract class Agent(id : Int) extends Actor with Stash with DecisionRule  {
   var simulator: ActorRef = context.parent
   var directory: Directory = new Directory()
 
-  /**
-    * Initiates a myopic agent which owns no packet
-    */
-  startWith(Initial,  new Mind( perception = null, load = None, attempt = None, targets = Nil))
+  var mind = new Mind( perception = null, load = None, attempt = None, targets = Nil)
 
   /**
     * Whatever the state is
     */
-  whenUnhandled {
+  override def unhandled(message: Any): Unit = message match {
     // If the agent is initiated with the directory
-    case Event(Init(d), mind) =>
+    case Init(d) =>
       this.simulator = sender
       this.directory = d
       if (debug) println(s"Agent$id is ready")
       sender ! Ready
-      stay using mind
 
     // If the agent is killed
-    case Event(Kill,mind) =>
+    case Kill =>
       if (debug) println(s"Agent$id is stopped")
       context.stop(self)
-      stay using mind
 
     // In case of unexpected event
-    case Event(e, mind) =>
-      println(s"Agent$id has received an unexpected event {} in state {}/{}", e, stateName, mind)
-      stay using mind
+    case e =>
+      println(s"Agent$id has received an unexpected event {} in state {}", e, mind)
 
   }
 }
