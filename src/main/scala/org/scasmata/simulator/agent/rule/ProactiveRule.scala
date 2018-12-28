@@ -9,45 +9,37 @@ import org.scasmata.simulator.agent.Perception
   * Proactive decision rule
   */
 trait ProactiveRule extends OperationalRule{
-  /**
-    * Select the targets according to the agent id and the perception
-    */
-  def selectSingleTargets(id: Int, perception : Environment) : Seq[Packet] = {
-    val targets = perception.packetsOfSize(size = 1).filter(_.id % perception.n +1 == id)
-    if (debug) println(s"Agent$id selects targets $targets")
-    targets.toSeq
-  }
 
   /**
-    * Decides next move of the agent id and its mind
+    * Decides next move of the agent id and its perception
     */
-  def takeAction(id: Int, mind: Perception) : Influence = {
-    val body = mind.e.bodies(id)
-    val (i,j) = mind.e.location(body)
+  def takeAction(id: Int, perception: Perception) : Influence = {
+    val body = perception.e.bodies(id)
+    val (i,j) = perception.e.location(body)
     println(s"Agent$id in ($i,$j) decides")
-    if (mind.load.isDefined) {
+    if (perception.load.isDefined) {
       if (debug) println(s"Agent$id is loaded")
-      if (mind.e.closedDestination(body)) {
+      if (perception.e.closedDestination(body)) {
         if (debug) println(s"Agent$id is closed to the destination, put down packet")
-        return PutDown(mind.load.get)
+        return PutDown(perception.load.get)
       }
-      val destination =  mind.e.destinationLocation()
+      val destination =  perception.e.destinationLocation()
       if (debug) println(s"Agent$id move toward the destination $destination")
-      return moveToward( (i,j), destination, mind.e)
+      return moveToward( (i,j), destination, perception.e)
     }
-    if (mind.targets.isEmpty){
+    if (perception.target.isEmpty){
       if (debug) println(s"Agent$id has no target and so stay alive")
       return Move(Center)
     }
-    val target = mind.targets.head
-    val place = mind.e.location(target)
+    val target = perception.target.get
+    val place = perception.e.location(target)
     if (debug) println(s"Agent$id has target $target in $place")
-    if (mind.e.closedPacket(body,target)){
+    if (perception.e.closedPacket(body,target)){
       if (debug) println(s"Agent$id picks $target since it is closed")
       return PickUp(target)
     }
     if (debug) println(s"Agent$id moves toward the target $target")
-    moveToward( (i,j), place , mind.e)
+    moveToward( (i,j), place , perception.e)
   }
 
   /**

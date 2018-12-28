@@ -16,5 +16,5 @@ trait OperationalRule{
   /**
     * Decides the next move for agent id with the mind
     */
-  def takeAction(id: Int, mind: Perception) : Influence
+  def takeAction(id: Int, perception: Perception) : Influence
 }

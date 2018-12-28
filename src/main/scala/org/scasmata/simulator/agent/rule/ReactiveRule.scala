@@ -15,24 +15,24 @@ trait ReactiveRule extends OperationalRule{
     * 2. pick up any packed if possible
     * 3. move randomly if possible
     */
-  def takeAction(id: Int, mind: Perception) : Influence = {
-    val (i,j) = mind.e.location(mind.e.bodies(id))
+  def takeAction(id: Int, perception: Perception) : Influence = {
+    val (i,j) = perception.e.location(perception.e.bodies(id))
     println(s"Agent$id in ($i,$j) decides")
-    val neighborhood = mind.e.neighborhood(i,j)
+    val neighborhood = perception.e.neighborhood(i,j)
     //1. put done packet if possible
-    if (mind.load.isDefined && neighborhood.exists(c => c.hasDestination))
-      return PutDown(mind.load.get)
+    if (perception.load.isDefined && neighborhood.exists(c => c.hasDestination))
+      return PutDown(perception.load.get)
     //2. pick up any packed if possible
-    if (mind.load.isEmpty) {
+    if (perception.load.isEmpty) {
       neighborhood.foreach { c =>
         if (c.hasPacket) {
-          val packet = c.content.asInstanceOf[Packet]
+          val packet : Packet= c.content.get.asInstanceOf[Packet]
           return PickUp(packet)
         }
       }
     }
     //3. move randomly if possible
-    val directions = mind.e.possibleDirections(i,j)
+    val directions = perception.e.possibleDirections(i,j)
     Move(directions(rnd.nextInt(directions.length)))
   }
 }

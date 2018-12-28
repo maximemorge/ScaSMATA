@@ -1,54 +1,37 @@
 // Copyright (C) Maxime MORGE 2018
 package org.scasmata.simulator.agent
 
-import akka.actor.{Actor, ActorRef, FSM, Stash}
+import akka.actor.{Actor, ActorRef}
 import org.scasmata.environment.{Environment, Packet}
 import org.scasmata.simulator._
 import org.scasmata.simulator.agent.rule.OperationalRule
 
 /**
-  * States of the agent
-  */
-sealed trait State
-case object Initial extends State
-
-/**
-  * Internal immutable state of mind
-  * @param e its perception
+  * Perception of the operational agent
+  * @param e its perception of the environment
   * @param load  packetId it owns, 0 otherwise
-  * @param attempt last influence emitted
+  * @param attempt eventually the last influence emitted
+  * @param target eventually the packet to collect
   */
-class Perception(val e: Environment, val load: Option[Packet], val attempt: Option[Influence], val targets: Seq[Packet])
+class Perception(val e: Environment, val load: Option[Packet], val attempt: Option[Influence], val target: Option[Packet])
 
 /**
-  * Agent behaviour
+  * Operational agent behaviour
   * @param id of its body
   */
 abstract class OperationalAgent(id : Int) extends Actor with OperationalRule {
-  var simulator: ActorRef = context.parent
-  var directory: Directory = new Directory()
-
-  var mind = new Perception( e = null, load = None, attempt = None, targets = Nil)
-
+  var perception = new Perception(e = null, load = None, attempt = None, target = null)
   /**
-    * Whatever the state is
+    * Handle managing
     */
   override def unhandled(message: Any): Unit = message match {
-    // If the agent is initiated with the directory
-    case Init(d) =>
-      this.simulator = sender
-      this.directory = d
-      if (debug) println(s"Agent$id is ready")
-      sender ! Ready
-
     // If the agent is killed
     case Kill =>
-      if (debug) println(s"Agent$id is stopped")
+      if (debug) println(s"OperationalAgent$id is stopped")
       context.stop(self)
-
     // In case of unexpected event
-    case e =>
-      println(s"Agent$id has received an unexpected event {} in state {}", e, mind)
+    case msg =>
+      println(s"OperationalAgent$id has received an unexpected event {} with perception {}", msg, perception)
 
   }
 }

@@ -11,8 +11,7 @@ import akka.util.Timeout
 import scala.concurrent.duration._
 import scala.language.postfixOps
 import org.scasmata.environment.{Center, Environment}
-import org.scasmata.simulator
-import org.scasmata.simulator.agent.ProactiveOperationalAgent
+import org.scasmata.simulator.agent.StrategicAgent
 
 /**
   * Simulator which :
@@ -41,7 +40,7 @@ class Simulator(val e: Environment, val delay : Int = 0) extends Actor{
     */
   e.bodies.values.foreach { body =>
     if (debug) println(s"Simulator creates an agent for body ${body.id}")
-    val actor = context.actorOf(Props(classOf[ProactiveOperationalAgent], body.id), body.id.toString)
+    val actor = context.actorOf(Props(classOf[StrategicAgent], body.id), body.id.toString)
     directory.add(body.id, actor) // Add it to the directory
   }
   // Initiation of the agents with the directory
@@ -94,8 +93,8 @@ class Simulator(val e: Environment, val delay : Int = 0) extends Actor{
 
     //When an actor observe the environment
     case Observe =>
-      val bodyId = directory.id(sender)
-      if (debug) println(s"Simulator updates $bodyId")
+      val id = directory.id(sender)
+      if (debug) println(s"Simulator updates $id")
       sender ! Update(e)
 
     //When an actor observe the environment
@@ -144,8 +143,7 @@ class Simulator(val e: Environment, val delay : Int = 0) extends Actor{
   }
 
   /**
-    *
-    * @param directory
+    * Stops the simulator
     */
   def stop() : Unit = {
     if (debug) println("Simulator ends")
