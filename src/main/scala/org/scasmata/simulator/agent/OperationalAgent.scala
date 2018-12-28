@@ -4,7 +4,7 @@ package org.scasmata.simulator.agent
 import akka.actor.{Actor, ActorRef, FSM, Stash}
 import org.scasmata.environment.{Environment, Packet}
 import org.scasmata.simulator._
-import org.scasmata.simulator.agent.rule.DecisionRule
+import org.scasmata.simulator.agent.rule.OperationalRule
 
 /**
   * States of the agent
@@ -14,21 +14,21 @@ case object Initial extends State
 
 /**
   * Internal immutable state of mind
-  * @param perception its perception
+  * @param e its perception
   * @param load  packetId it owns, 0 otherwise
   * @param attempt last influence emitted
   */
-class Mind(val perception: Environment, val load: Option[Packet], val attempt: Option[Influence], val targets: Seq[Packet])
+class Perception(val e: Environment, val load: Option[Packet], val attempt: Option[Influence], val targets: Seq[Packet])
 
 /**
   * Agent behaviour
   * @param id of its body
   */
-abstract class Agent(id : Int) extends Actor with Stash with DecisionRule  {
+abstract class OperationalAgent(id : Int) extends Actor with OperationalRule {
   var simulator: ActorRef = context.parent
   var directory: Directory = new Directory()
 
-  var mind = new Mind( perception = null, load = None, attempt = None, targets = Nil)
+  var mind = new Perception( e = null, load = None, attempt = None, targets = Nil)
 
   /**
     * Whatever the state is

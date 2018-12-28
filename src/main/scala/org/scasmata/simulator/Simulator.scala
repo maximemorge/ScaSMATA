@@ -12,7 +12,7 @@ import scala.concurrent.duration._
 import scala.language.postfixOps
 import org.scasmata.environment.{Center, Environment}
 import org.scasmata.simulator
-import org.scasmata.simulator.agent.ProactiveAgent
+import org.scasmata.simulator.agent.ProactiveOperationalAgent
 
 /**
   * Simulator which :
@@ -41,7 +41,7 @@ class Simulator(val e: Environment, val delay : Int = 0) extends Actor{
     */
   e.bodies.values.foreach { body =>
     if (debug) println(s"Simulator creates an agent for body ${body.id}")
-    val actor = context.actorOf(Props(classOf[ProactiveAgent], body.id), body.id.toString)
+    val actor = context.actorOf(Props(classOf[ProactiveOperationalAgent], body.id), body.id.toString)
     directory.add(body.id, actor) // Add it to the directory
   }
   // Initiation of the agents with the directory

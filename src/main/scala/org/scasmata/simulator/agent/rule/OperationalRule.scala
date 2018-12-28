@@ -4,18 +4,17 @@ package org.scasmata.simulator.agent.rule
 import java.util.concurrent.ThreadLocalRandom
 
 import org.scasmata.simulator._
-import org.scasmata.environment._
-import org.scasmata.simulator.agent.Mind
+import org.scasmata.simulator.agent.Perception
 
 /**
   * Abstract decision rule
   */
-trait DecisionRule{
+trait OperationalRule{
   val debug = true
   val rnd : ThreadLocalRandom = ThreadLocalRandom.current()
 
   /**
     * Decides the next move for agent id with the mind
     */
-  def decide(id: Int, mind: Mind) : Influence
+  def takeAction(id: Int, mind: Perception) : Influence
 }

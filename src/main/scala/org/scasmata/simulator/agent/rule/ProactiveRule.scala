@@ -3,12 +3,12 @@ package org.scasmata.simulator.agent.rule
 
 import org.scasmata.simulator._
 import org.scasmata.environment._
-import org.scasmata.simulator.agent.Mind
+import org.scasmata.simulator.agent.Perception
 
 /**
   * Proactive decision rule
   */
-trait ProactiveRule extends DecisionRule{
+trait ProactiveRule extends OperationalRule{
   /**
     * Select the targets according to the agent id and the perception
     */
@@ -21,33 +21,33 @@ trait ProactiveRule extends DecisionRule{
   /**
     * Decides next move of the agent id and its mind
     */
-  def decide(id: Int, mind: Mind) : Influence = {
-    val body = mind.perception.bodies(id)
-    val (i,j) = mind.perception.location(body)
+  def takeAction(id: Int, mind: Perception) : Influence = {
+    val body = mind.e.bodies(id)
+    val (i,j) = mind.e.location(body)
     println(s"Agent$id in ($i,$j) decides")
     if (mind.load.isDefined) {
       if (debug) println(s"Agent$id is loaded")
-      if (mind.perception.closedDestination(body)) {
+      if (mind.e.closedDestination(body)) {
         if (debug) println(s"Agent$id is closed to the destination, put down packet")
         return PutDown(mind.load.get)
       }
-      val destination =  mind.perception.destinationLocation()
+      val destination =  mind.e.destinationLocation()
       if (debug) println(s"Agent$id move toward the destination $destination")
-      return moveToward( (i,j), destination, mind.perception)
+      return moveToward( (i,j), destination, mind.e)
     }
     if (mind.targets.isEmpty){
       if (debug) println(s"Agent$id has no target and so stay alive")
       return Move(Center)
     }
     val target = mind.targets.head
-    val place = mind.perception.location(target)
+    val place = mind.e.location(target)
     if (debug) println(s"Agent$id has target $target in $place")
-    if (mind.perception.closedPacket(body,target)){
+    if (mind.e.closedPacket(body,target)){
       if (debug) println(s"Agent$id picks $target since it is closed")
       return PickUp(target)
     }
     if (debug) println(s"Agent$id moves toward the target $target")
-    moveToward( (i,j), place , mind.perception)
+    moveToward( (i,j), place , mind.e)
   }
 
   /**
