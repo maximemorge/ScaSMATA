@@ -20,18 +20,32 @@ class StrategicAgent(val id : Int) extends Actor {
   var vision: Environment = _
 
   /**
-    * Select the targets according to the agent id and the perception
+    * Select the single targets (lightweight packets) according to the agent id and the perception
     */
-  def selectSingleTargets(id: Int) : Seq[Packet] = {
-    val targets = vision.packetsOfSize(size = 1).filter(_.id % vision.n +1 == id)
-    if (debug) println(s"StrategicAgent$id selects targets $targets")
-    targets.toSeq
+  var singleTargets = Seq[Packet]()
+
+  /**
+    * Select the multi targets (heavy packets) according to the agent id and the perception
+    */
+  var multiTargets = Seq[Packet]()
+
+  /**
+    * Compute single/multi targets
+    */
+  def takeAim() : Unit ={
+    singleTargets =vision.lightweightPackets().filter(_.id % vision.n +1 == id).toSeq
+    multiTargets = vision.heavyPackets().filter(_.id % vision.n +1 == id).toSeq
   }
 
+
+
+  /**
+    * Handle messages
+    */
   override def receive : PartialFunction[Any,Unit] = process orElse forward
 
   /**
-    * Handles message
+    * Processes message
     */
   def process : PartialFunction[Any,Unit] = {
     // If the strategicAgent is initiated with the directory
@@ -44,11 +58,11 @@ class StrategicAgent(val id : Int) extends Actor {
       this.simulator = sender
       if (debug) println(s"StrategicAgent$id is updated")
       vision = e
-      val targets = selectSingleTargets(id)
+      takeAim()
       //TODO what if there is some heavy packets
-      if (debug) println(s"StrategicAgent$id chooses target $targets")
-      sender ! Inform(targets)
-      operationalAgent ! Delegate(targets.headOption,vision)
+      if (debug) println(s"StrategicAgent$id chooses target $singleTargets")
+      sender ! Inform(singleTargets)
+      operationalAgent ! Delegate(singleTargets.headOption,vision)
   }
 
   /**
@@ -60,7 +74,6 @@ class StrategicAgent(val id : Int) extends Actor {
       this.simulator ! Observe
     // If the operational agent acts
     case influence : Influence =>
-      if (debug) println(s"StrategicalAgent$id forwards $influence")
       this.simulator ! influence
     // If the environment reacts
     case reaction: Reaction =>

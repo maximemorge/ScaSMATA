@@ -97,7 +97,7 @@ class Simulator(val e: Environment, val delay : Int = 0) extends Actor{
       if (debug) println(s"Simulator updates $id")
       sender ! Update(e)
 
-    //When an actor observe the environment
+    //When an actor informs the simulator about its target
     case Inform(targets) =>
       val bodyId = directory.id(sender)
       if (debug) println(s"Simulator updates $bodyId's targets")

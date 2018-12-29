@@ -1,6 +1,8 @@
 // Copyright (C) Maxime MORGE 2018
 package org.scasmata.environment
 
+import org.scasmata.environment
+
 /**
   * Color for Packets and CollectionPoint
   */
@@ -44,7 +46,12 @@ case object Brown extends Color{
   */
 object Color {
   // Mapping between agentId and color
-  val MAPPING = Map(1->Red, 2->Green, 3->Blue, 4 -> Black)
+  val BELONGINGS = Map(1->Red, 2->Green, 3->Blue, 4 -> Black)
+  val COLLECTIVE_BELONGINGS = Map(
+    Seq(1,2) -> RedGreen, Seq(1,3) -> RedBlue, Seq(1,4) -> BlackRed,
+    Seq(2,3) -> GreenBlue, Seq(2,4) -> BlackGreen,
+    Seq(3,4) -> BlackBlue
+  )
 
   /**
     * Returns the color which mixes the color c1 and the color c2

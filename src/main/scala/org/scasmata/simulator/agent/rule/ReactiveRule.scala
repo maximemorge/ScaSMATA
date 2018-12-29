@@ -32,7 +32,7 @@ trait ReactiveRule extends OperationalRule{
       }
     }
     //3. move randomly if possible
-    val directions = perception.e.possibleDirections(i,j)
+    val directions = perception.e.emptyDirection(i,j)
     Move(directions(rnd.nextInt(directions.length)))
   }
 }

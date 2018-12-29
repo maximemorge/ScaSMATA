@@ -30,11 +30,14 @@ class Cell(i: Int, j : Int)extends Publisher{
     val path = (content match {
       case Some(Destination()) =>
         "brownPlace"
-      case Some(Body(id,load)) =>
-        if (load.isEmpty) "fig"+id.toString
-        else  "fig"+id.toString+"load"
-      case Some(Packet(_,size,color)) =>
-        color.toString+size.toString
+      case Some(b : Body) =>
+        if (b.load.isEmpty) "fig"+ b.id.toString
+        else  "fig"+b.id.toString+"load"
+      case Some(c : Coalition) =>
+        if (c.load.isEmpty) "fig"+c.ids.map(_.toString).reduce((left, right) => s"$left$right")
+        else  "fig"+c.ids.map(_.toString).reduce((left, right) => s"$left$right")+"load"
+      case Some(p : Packet) =>
+        p.color.toString+p.size.toString
       case _ =>
         "nothing"
     }) + ".png"
@@ -64,6 +67,7 @@ class Cell(i: Int, j : Int)extends Publisher{
   def isAccessible : Boolean = content match {
     case None => true
     case Some(_ : Body) => true
+    case Some(_ : Coalition) => true
     case Some(_ : Destination) => false
     case Some(_ : Packet) => false
     case _ => throw new RuntimeException("Unexpected content of cell")
