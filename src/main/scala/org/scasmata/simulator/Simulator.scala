@@ -11,7 +11,7 @@ import akka.util.Timeout
 import scala.concurrent.duration._
 import scala.language.postfixOps
 import org.scasmata.environment.{Center, Environment}
-import org.scasmata.simulator.agent.StrategicAgent
+import org.scasmata.simulator.agent.Agent
 
 /**
   * Simulator which :
@@ -23,7 +23,7 @@ import org.scasmata.simulator.agent.StrategicAgent
   * */
 class Simulator(val e: Environment, val delay : Int = 0) extends Actor{
   val debug = true
-  val TIMEOUT_VALUE: FiniteDuration = 1 seconds // Default timeout of starting agent
+  val TIMEOUT_VALUE: FiniteDuration = 10 seconds // Default timeout of starting agent
   implicit val timeout: Timeout = Timeout(TIMEOUT_VALUE)
   var pause = false
 
@@ -40,7 +40,7 @@ class Simulator(val e: Environment, val delay : Int = 0) extends Actor{
     */
   e.bodies.values.foreach { body =>
     if (debug) println(s"Simulator creates an agent for body ${body.id}")
-    val actor = context.actorOf(Props(classOf[StrategicAgent], body.id), body.id.toString)
+    val actor = context.actorOf(Props(classOf[Agent], body.id), body.id.toString)
     directory.add(body.id, actor) // Add it to the directory
   }
   // Initiation of the agents with the directory
@@ -62,7 +62,6 @@ class Simulator(val e: Environment, val delay : Int = 0) extends Actor{
       directory.allAgents().foreach { actor: ActorRef => //Trigger them
         actor ! Update(e)
       }
-
     //When the simulator is in Pause
     case Pause =>
       pause = true

@@ -22,9 +22,13 @@ case object Go extends ManagingMessage // Timeout from a timer
   * Internal Message
   */
 abstract class InternalMessage
-case object Operate extends InternalMessage // Init the operational agent
-case class Delegate(target: Option[Packet], environment: Environment) extends InternalMessage // delegate the target collection to the operational agent
-case class Done(target : Packet) extends InternalMessage // Operational agent informs the strategical agent that target is collected
+case object Operate extends InternalMessage // Init the worker
+case class Delegate(target: Option[Packet], environment: Environment) extends InternalMessage // delegate the target collection to the worker
+case class Done(target : Packet) extends InternalMessage // worker informs the agent that target is collected
+case class QueryTargets(vision: Environment) extends InternalMessage // Query the negotiator about targets
+case class ReplyTargets(targets: Seq[Packet]) extends InternalMessage // The negotiator provides targets
+case class QueryPartner(target: Packet) extends InternalMessage // Query the negotiator about a partner
+case class ReplyPartner(target: Packet, partnerId : Int) extends InternalMessage // The negotiator has found a partner
 
 /**
   * Message between the scheduler and the agent

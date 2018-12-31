@@ -5,28 +5,27 @@ import org.scasmata.simulator._
 import org.scasmata.simulator.agent.rule.ReactiveRule
 
 /**
-  * OperationalAgent behaviour performing a random walk
+  * Worker behaviour performing a random walk
   * @param id of its body
   */
-class ReactiveOperationalAgent(id : Int) extends OperationalAgent(id) with ReactiveRule{
+class ReactiveWorker(id : Int) extends OperationalAgent(id) with ReactiveRule{
 
   /**
     * Handle Influence messages
     */
   override def receive : PartialFunction[Any,Unit] = {
-    // If the environment perception is updated
+    // The environment perception is updated
     case Delegate(_,e) =>
       perception = new Perception(e, perception.load, perception.attempt, None)
-      if (debug) println(s"OperationalAgent$id is updated")
+      if (debug) println(s"Worker$id is updated")
       val nextInfluence = takeAction(id, perception)
-      if (debug) println(s"OperationalAgent$id decides $nextInfluence")
+      if (debug) println(s"Worker$id decides $nextInfluence")
       perception = new Perception(e, perception.load, Some(nextInfluence), None)
       sender ! nextInfluence
-
-    // If the last influence is successful
+    // The last influence is successful
     case Success =>
-      if (debug) println(s"OperationalAgent$id is informed that its previous influence success")
-      if (debug) println(s"OperationalAgent$id observes")
+      if (debug) println(s"Worker$id is informed that its previous influence success")
+      if (debug) println(s"Worker$id observes")
       sender ! Observe
       perception = perception.attempt match {
         case Some(PickUp(packet)) =>
@@ -36,10 +35,10 @@ class ReactiveOperationalAgent(id : Int) extends OperationalAgent(id) with React
         case _ =>
           new Perception(perception.e, perception.load, attempt = None, None)
       }
-    // If the previous influence is failed
+    // The previous influence is failed
     case Failure =>
-      if (debug) println(s"OperationalAgent$id is informed that its previous influence succeed")
-      if (debug) println(s"OperationalAgent$id observes")
+      if (debug) println(s"Worker$id is informed that its previous influence succeed")
+      if (debug) println(s"Worker$id observes")
       sender ! Observe
       perception = new Perception(perception.e, perception.load, attempt = None, None)
   }

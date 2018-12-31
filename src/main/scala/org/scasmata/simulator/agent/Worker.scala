@@ -7,9 +7,9 @@ import org.scasmata.simulator._
 import org.scasmata.simulator.agent.rule.OperationalRule
 
 /**
-  * Perception of the operational agent
+  * Perception of the worker
   * @param e its perception of the environment
-  * @param load  packetId it owns, 0 otherwise
+  * @param load  packet it owns, 0 otherwise
   * @param attempt eventually the last influence emitted
   * @param target eventually the packet to collect
   */
@@ -27,11 +27,11 @@ abstract class OperationalAgent(id : Int) extends Actor with OperationalRule {
   override def unhandled(message: Any): Unit = message match {
     // If the agent is killed
     case Kill =>
-      if (debug) println(s"OperationalAgent$id is stopped")
+      if (debug) println(s"Worker$id is stopped")
       context.stop(self)
     // In case of unexpected event
     case msg =>
-      println(s"OperationalAgent$id has received an unexpected event {} with perception {}", msg, perception)
+      println(s"Worker$id has received an unexpected event {} with perception {}", msg, perception)
 
   }
 }

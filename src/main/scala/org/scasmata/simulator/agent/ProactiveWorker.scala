@@ -5,10 +5,10 @@ import org.scasmata.simulator._
 import org.scasmata.simulator.agent.rule.ProactiveRule
 
 /**
-  * Proactive operational agent behaviour
+  * Proactive worker agent behaviour
   * @param id of its body
   */
-class ProactiveOperationalAgent(id : Int) extends OperationalAgent(id) with ProactiveRule{
+class ProactiveWorker(id : Int) extends OperationalAgent(id) with ProactiveRule{
 
   /**
     * Handle message
@@ -16,17 +16,17 @@ class ProactiveOperationalAgent(id : Int) extends OperationalAgent(id) with Proa
   override def receive : PartialFunction[Any,Unit] = {
     // If the perception is updated
     case Delegate(t,e) =>
-      if (debug) println(s"OperationalAgent$id is in charge of $t")
+      if (debug) println(s"Worker$id is in charge of $t")
       perception = new Perception(e, perception.load, perception.attempt,t)
       val nextInfluence = takeAction(id, perception)
-      if (debug) println(s"OperationalAgent$id decides $nextInfluence")
+      if (debug) println(s"Worker$id decides $nextInfluence")
       sender ! nextInfluence
       perception = new Perception(e, perception.load, Some(nextInfluence),t)
 
     // If the last influence is successful
     case Success =>
-      if (debug) println(s"OperationalAgent$id is informed that its previous influence success")
-      if (debug) println(s"OperationalAgent$id observes")
+      if (debug) println(s"Worker$id is informed that its previous influence success")
+      if (debug) println(s"Worker$id observes")
       perception = perception.attempt match {
         case Some(PickUp(packet)) =>
           new Perception(perception.e, load = Some(packet), attempt = None, perception.target)
@@ -39,8 +39,8 @@ class ProactiveOperationalAgent(id : Int) extends OperationalAgent(id) with Proa
 
     // If the previous influence is failed
     case Failure =>
-      if (debug) println(s"OperationalAgent$id is informed that its previous influence succeed")
-      if (debug) println(s"OperationalAgent$id observes")
+      if (debug) println(s"Worker$id is informed that its previous influence succeed")
+      if (debug) println(s"Worker$id observes")
       sender ! Observe
   }
 }
