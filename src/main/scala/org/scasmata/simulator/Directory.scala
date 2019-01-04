@@ -23,6 +23,17 @@ class Directory {
     else throw new RuntimeException(s"$bodyId and/or $ref already in the directory")
   }
 
+  /**
+    * Remove to the directory a bodyId
+    */
+  def remove(bodyId: Int, ref: ActorRef) : Unit = {
+    if (adr.keySet.contains(bodyId) &&  id.keySet.contains(ref)) {
+      adr -= bodyId
+      id -= ref
+    }
+    else throw new RuntimeException(s"$bodyId and/or $ref are not in the directory")
+  }
+
   def allAgents() : Iterable[ActorRef]  = adr.values
   def allIds() : Iterable[Int]  = id.values
   def peers(bodyId: Int) : Set[Int] = allIds().filterNot(_ == bodyId).toSet

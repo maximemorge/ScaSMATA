@@ -24,20 +24,30 @@ class ReactiveWorker(id : Int) extends OperationalAgent(id) with ReactiveRule{
       sender ! nextInfluence
     // The last influence is successful
     case Success =>
-      if (debug) println(s"Worker$id is informed that its previous influence success")
-      if (debug) println(s"Worker$id observes")
-      sender ! Observe
+      if (debug) println(s"Worker$id is informed that its previous influence ${perception.attempt} success")
       perception = perception.attempt match {
+        case Some(Merge(_)) =>
+          if (debug) println(s"Worker$id commits suicide")
+          sender ! Kill
+          new Perception(perception.e, perception.load, attempt = None, None)
         case Some(PickUp(packet)) =>
+          if (debug) println(s"Worker$id observes")
+          sender ! Observe
           new Perception(perception.e, load = Some(packet), attempt = None, None)
         case Some(PutDown(_)) =>
+          if (debug) println(s"Worker$id observes")
+          sender ! Observe
           new Perception(perception.e, load = None , attempt = None, None)
-        case _ =>
+        case Some(Move(_)) =>
+          if (debug) println(s"Worker$id observes")
+          sender ! Observe
           new Perception(perception.e, perception.load, attempt = None, None)
+        case None =>
+          throw new RuntimeException(s"Worker$id does not understand success of None")
       }
     // The previous influence is failed
     case Failure =>
-      if (debug) println(s"Worker$id is informed that its previous influence succeed")
+      if (debug) println(s"Worker$id is informed that its previous influence ${perception.attempt} failed")
       if (debug) println(s"Worker$id observes")
       sender ! Observe
       perception = new Perception(perception.e, perception.load, attempt = None, None)

@@ -20,7 +20,7 @@ class Environment(val height: Int, val width: Int, val n: Int = 1, val m: Int = 
     grid(i)(j) = new Cell(i,j)
   var packets = Map[Int,Packet]()
   var bodies  = Map[Int,Body]()
-  var coalitions = Map[Seq[Int],Body]()
+  var coalitions = Map[Seq[Int],Coalition]()
   // Number of packets which are putted down
   private var nbCollectedPackets = 0
 
@@ -40,7 +40,7 @@ class Environment(val height: Int, val width: Int, val n: Int = 1, val m: Int = 
       grid(i)(j).setContent(None)
     packets = Map[Int,Packet]()
     bodies  = Map[Int,Body]()
-    coalitions = Map[Seq[Int],Body]()
+    coalitions = Map[Seq[Int],Coalition]()
     nbCollectedPackets = 0
   }
   /**
@@ -175,10 +175,10 @@ class Environment(val height: Int, val width: Int, val n: Int = 1, val m: Int = 
     var n = Seq[Cell]()
     if (i>0) n :+=  get(i-1,j)
     if (j>0) n :+= get(i,j-1)
-    if (i>0 && j>0) n :+= get(i-1,j-1)
+    //if (i>0 && j>0) n :+= get(i-1,j-1)
     if (i< height-1) n :+=  get(i+1,j)
     if (j< width-1) n :+=  get(i,j+1)
-    if (j< width-1 && i< height-1) n :+=  get(i+1,j+1)
+    //if (j< width-1 && i< height-1) n :+=  get(i+1,j+1)
     n
   }
 
@@ -249,6 +249,20 @@ class Environment(val height: Int, val width: Int, val n: Int = 1, val m: Int = 
   }
 
   /**
+    * Updates the environment when two bodies merge
+    */
+  def updateMerge(body1: Body, body2: Body): Unit = {
+    val (i,j) = location(body1)
+    val (k,l) = location(body2)
+    bodies = bodies.filterKeys(id => id != body1.id && id != body2.id)
+    val coalition = new Coalition(Seq(body1.id,body2.id))
+    coalitions = coalitions + (coalition.ids -> coalition)
+    grid(k)(l).setContent(None)
+    grid(i)(j).setContent(Some(coalition))
+  }
+
+
+  /**
     * Update the environment with a target
     */
   def updateTarget(bodyId: Int, packet: Packet): Unit = {
@@ -293,5 +307,20 @@ class Environment(val height: Int, val width: Int, val n: Int = 1, val m: Int = 
     neighborhood(i, j).exists(c => c.hasPacket(packet))
   }
 
+  /**
+    * Returns true if the body is closed to another one
+    */
+  def closedBody(entity: Entity): Boolean = {
+    val (i, j) = location(entity)
+    neighborhood(i, j).exists(c => c.hasBody)
+  }
+
+  /**
+    * Returns true if the body is closed to another one
+    */
+  def closedBody(entity: Entity, body : Body): Boolean = {
+    val (i, j) = location(entity)
+    neighborhood(i, j).exists(c => c.hasBody(body))
+  }
 }
 

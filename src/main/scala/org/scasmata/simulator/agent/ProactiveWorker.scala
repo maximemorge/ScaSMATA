@@ -26,16 +26,24 @@ class ProactiveWorker(id : Int) extends OperationalAgent(id) with ProactiveRule{
     // If the last influence is successful
     case Success =>
       if (debug) println(s"Worker$id is informed that its previous influence success")
-      if (debug) println(s"Worker$id observes")
       perception = perception.attempt match {
+        case Some(Merge(_)) =>
+          if (debug) println(s"Worker$id commits suicide")
+          sender ! Kill
+          new Perception(perception.e, perception.load, attempt = None, perception.target)
         case Some(PickUp(packet)) =>
+          if (debug) println(s"Worker$id observe")
+          sender ! Observe
           new Perception(perception.e, load = Some(packet), attempt = None, perception.target)
         case Some(PutDown(_)) =>
+          if (debug) println(s"Worker$id observe")
+          sender ! Observe
           new Perception(perception.e, load = None, attempt = None, None)
         case _ =>
+          if (debug) println(s"Worker$id observe")
+          sender ! Observe
           new Perception(perception.e, perception.load, attempt = None, perception.target)
       }
-      sender ! Observe
 
     // If the previous influence is failed
     case Failure =>

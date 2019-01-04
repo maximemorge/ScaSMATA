@@ -12,7 +12,7 @@ import scala.swing.event.ValueChanged
   * @param j the column
   */
 class Cell(i: Int, j : Int)extends Publisher{
-  val debug = false
+  val debug = true
 
   // The cell content is an entity, i.e. a body or a packet or a destination, eventually none
   var content : Option[Entity] = None
@@ -34,7 +34,7 @@ class Cell(i: Int, j : Int)extends Publisher{
         if (b.load.isEmpty) "fig"+ b.id.toString
         else  "fig"+b.id.toString+"load"
       case Some(c : Coalition) =>
-        if (c.load.isEmpty) "fig"+c.ids.map(_.toString).reduce((left, right) => s"$left$right")
+        if (c.load.isEmpty) "fig"+c.ids.sorted.map(_.toString).reduce((left, right) => s"$left$right")
         else  "fig"+c.ids.map(_.toString).reduce((left, right) => s"$left$right")+"load"
       case Some(p : Packet) =>
         p.color.toString+p.size.toString
@@ -97,6 +97,23 @@ class Cell(i: Int, j : Int)extends Publisher{
     case Some(_: Destination) => true
     case _ => false
   }
+
+  /**
+    * Returns true if the cell contains a body
+    */
+  def hasBody : Boolean = content match {
+    case Some(_: Body) => true
+    case _ => false
+  }
+
+  /**
+    * Returns true if the cell contains a particular body
+    */
+  def hasBody(body: Body) : Boolean =
+    content match {
+      case Some(b: Body) if b == body=> true
+      case _ => false
+    }
 }
 
 /**

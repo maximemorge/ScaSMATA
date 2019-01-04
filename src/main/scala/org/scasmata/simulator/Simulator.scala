@@ -10,7 +10,7 @@ import akka.util.Timeout
 
 import scala.concurrent.duration._
 import scala.language.postfixOps
-import org.scasmata.environment.{Center, Environment}
+import org.scasmata.environment.{Center, Environment, Body}
 import org.scasmata.simulator.agent.Agent
 
 /**
@@ -43,13 +43,20 @@ class Simulator(val e: Environment, val delay : Int = 0) extends Actor{
     val actor = context.actorOf(Props(classOf[Agent], body.id), body.id.toString)
     directory.add(body.id, actor) // Add it to the directory
   }
-  // Initiation of the agents with the directory
-  if (debug) println(s"Simulator initiates all agents")
-  directory.allAgents().foreach { a =>
-    val future = a ? Init(directory)
-    Await.result(future, timeout.duration) == Ready
-    if (debug) println("Simulator receives ready")
+
+  /**
+    *  Initiation of the agents with the directory
+    */
+  def init() = {
+    if (debug) println(s"Simulator initiates all agents")
+    directory.allAgents().foreach { a =>
+      val future = a ? Init(directory)
+      Await.result(future, timeout.duration) == Ready
+      if (debug) println("Simulator receives ready")
+    }
   }
+
+  init()
 
   /**
     * Message handling
@@ -69,7 +76,7 @@ class Simulator(val e: Environment, val delay : Int = 0) extends Actor{
     //When the simulator replays
     case Replay =>
       pause = false
-      if (influences.keys.size == e.n) { // Compute reaction
+      if (influences.keys.size == e.bodies.size) { // Compute reaction
         triggerTimerIfRequired()
       } else {
         // Otherwise wait for other actions
@@ -78,7 +85,7 @@ class Simulator(val e: Environment, val delay : Int = 0) extends Actor{
 
     //When the simulator play next step
     case Next =>
-      if (influences.keys.size == e.n) { // Compute reaction
+      if (influences.keys.size == e.bodies.size) { // Compute reaction
         triggerTimerIfRequired()
       } else {
         // Otherwise wait for other actions
@@ -92,10 +99,13 @@ class Simulator(val e: Environment, val delay : Int = 0) extends Actor{
 
     //When an actor observe the environment
     case Observe =>
-      val id = directory.id(sender)
-      if (debug) println(s"Simulator updates $id")
-      sender ! Update(e)
-
+      try {
+        val id = directory.id(sender)
+        if (debug) println(s"Simulator updates $id")
+        sender ! Update(e)
+      }catch {
+        case _: Throwable => println("Simulator does not update agents which are already dead")
+      }
     //When an actor informs the simulator about its target
     case Inform(targets) =>
       val bodyId = directory.id(sender)
@@ -109,7 +119,7 @@ class Simulator(val e: Environment, val delay : Int = 0) extends Actor{
       influences = influences + (bodyId -> influence)
       // Count the steps
       if (influence != Move(Center))  steps += (bodyId-> (steps.getOrElse(bodyId,0)+1))
-      if (influences.keys.size == e.n && !pause) { // Compute reaction
+      if (influences.keys.size == e.bodies.size && !pause) { // Compute reaction
         triggerTimerIfRequired()
       } else {
         // Otherwise wait for other actions
@@ -158,6 +168,7 @@ class Simulator(val e: Environment, val delay : Int = 0) extends Actor{
     val pickUps = influences.collect{ case (id, influence: PickUp) => (id, influence) }
     val putDowns = influences.collect{ case (id, influence : PutDown) => (id, influence) }
     val moves = influences.collect { case (id, influence : Move) => (id, influence) }
+    val merges  = reciprocal(influences.collect{ case (id, influence : Merge) => (id, influence) } toList)
 
     // 1 - process pick up
     pickUps.foreach{
@@ -200,7 +211,7 @@ class Simulator(val e: Environment, val delay : Int = 0) extends Actor{
         throw new RuntimeException(s"$influence by $body was not excepted")
     }
 
-    //3 - process moves
+    //3- process moves
     moves.foreach{
       case (id,Move(direction)) =>
         val body = e.bodies(id)
@@ -217,9 +228,39 @@ class Simulator(val e: Environment, val delay : Int = 0) extends Actor{
         val body = e.bodies(id)
         throw new RuntimeException(s"$influence by $body was not excepted")
     }
+
+    //4 - process merge
+    merges.foreach {
+      case (body1, body2) =>
+        directory.adr(body1.id) ! Kill
+        directory.adr(body2.id) ! Kill
+        directory.remove(body1.id, directory.adr(body1.id))
+        directory.remove(body2.id, directory.adr(body2.id))
+        e.updateMerge(body1, body2)
+        init()
+    }
     false
   }
 
+  /**
+    * Return the reciprocal merges
+    */
+  def reciprocal(merges: List[(Int, Merge)]) : Seq[(Body,Body)] = {
+    if (merges.isEmpty) return Seq()
+    val (id, influence) = merges.head
+    val origin = e.bodies(id)
+    val target = influence.body
+    val tail = merges.tail
+    if (tail.contains((target.id,Merge(origin))) &&
+      e.closedBody(origin, target) &&
+      origin.load.isEmpty && target.load.isEmpty
+    ) {
+      return reciprocal(tail) :+ (origin, target)
+    }
+    if (debug) println(s"Merge($target) by $origin failure")
+    directory.adr(origin.id) ! Failure
+    reciprocal(tail)
+  }
 }
 
 /**
