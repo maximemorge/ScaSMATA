@@ -14,12 +14,12 @@ trait ProactiveRule extends OperationalRule{
     * Decides next move of the agent id and its perception
     */
   def takeAction(id: Int, perception: Perception) : Influence = {
-    val body = perception.e.bodies(id)
-    val (i,j) = perception.e.location(body)
+    val entity = perception.e.activeEntities(id)
+    val (i,j) = perception.e.location(entity)
     println(s"Agent$id in ($i,$j) decides")
     if (perception.load.isDefined) {
       if (debug) println(s"Agent$id is loaded")
-      if (perception.e.closedDestination(body)) {
+      if (perception.e.closedDestination(entity)) {
         if (debug) println(s"Agent$id is closed to the destination, put down packet")
         return PutDown(perception.load.get)
       }
@@ -34,7 +34,7 @@ trait ProactiveRule extends OperationalRule{
     val target = perception.target.get
     val place = perception.e.location(target)
     if (debug) println(s"Agent$id has target $target in $place")
-    if (perception.e.closedPacket(body,target)){
+    if (perception.e.closed(entity,target)){
       if (debug) println(s"Agent$id picks $target since it is closed")
       return PickUp(target)
     }

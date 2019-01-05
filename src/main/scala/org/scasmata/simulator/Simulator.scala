@@ -170,7 +170,7 @@ class Simulator(val e: Environment, val delay : Int = 0) extends Actor{
     // 1 - process pick up
     pickUps.foreach{
       case (id,PickUp(packet)) =>
-        val entity = e.bodies.getOrElse(id,e.crowds(id))
+        val entity = e.activeEntities(id)
         if (packet.size > entity.capacity || entity.load.isDefined || ! e.closed(entity,packet)) {
           if (debug) println(s"Pickup(packet) by $entity failure")
           directory.adr(id) ! Failure
@@ -184,7 +184,7 @@ class Simulator(val e: Environment, val delay : Int = 0) extends Actor{
     //2 - process put down
     putDowns.foreach{
       case (id, PutDown(packet)) =>
-        val entity = e.bodies.getOrElse(id,e.crowds(id))
+        val entity =  e.activeEntities(id)
         if (!entity.load.contains(packet) ||  !e.closedDestination(entity)) {
           if (debug) println(s"PutDown($packet) by $entity failure")
           directory.adr(id) ! Failure
@@ -203,7 +203,7 @@ class Simulator(val e: Environment, val delay : Int = 0) extends Actor{
     //3- process moves
     moves.foreach{
       case (id,Move(direction)) =>
-        val entity = e.bodies.getOrElse(id,e.crowds(id))
+        val entity =  e.activeEntities(id)
         if (!e.isAccessibleDirection(entity,direction)){
           if (debug) println(s"Move($direction) by $entity failed")
           directory.adr(id) ! Failure
@@ -221,8 +221,11 @@ class Simulator(val e: Environment, val delay : Int = 0) extends Actor{
         directory.adr(entity2.id) ! Kill
         directory.remove(entity1.id, directory.adr(entity1.id))
         directory.remove(entity2.id, directory.adr(entity2.id))
-        e.updateMerge(entity1, entity2)
+        val crowd = e.updateMerge(entity1, entity2)
+        val actor = context.actorOf(Props(classOf[Agent], crowd.id), crowd.id.toString)
+        directory.add(crowd.id, actor) // Add it to the directory
         init()
+        actor ! Update(e)
     }
     false
   }

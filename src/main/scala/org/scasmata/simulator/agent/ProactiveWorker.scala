@@ -6,7 +6,7 @@ import org.scasmata.simulator.agent.rule.ProactiveRule
 
 /**
   * Proactive worker agent behaviour
-  * @param id of its body
+  * @param id of its activeEntity
   */
 class ProactiveWorker(id : Int) extends OperationalAgent(id) with ProactiveRule{
 
@@ -25,12 +25,8 @@ class ProactiveWorker(id : Int) extends OperationalAgent(id) with ProactiveRule{
 
     // If the last influence is successful
     case Success =>
-      if (debug) println(s"Worker$id is informed that its previous influence success")
+      if (debug) println(s"Worker$id is informed that its previous influence ${perception.attempt} success")
       perception = perception.attempt match {
-        case Some(Merge(_)) =>
-          if (debug) println(s"Worker$id commits suicide")
-          sender ! Kill
-          new Perception(perception.e, perception.load, attempt = None, perception.target)
         case Some(PickUp(packet)) =>
           if (debug) println(s"Worker$id observe")
           sender ! Observe
@@ -39,7 +35,7 @@ class ProactiveWorker(id : Int) extends OperationalAgent(id) with ProactiveRule{
           if (debug) println(s"Worker$id observe")
           sender ! Observe
           new Perception(perception.e, load = None, attempt = None, None)
-        case _ =>
+        case Some(Move(_)) =>
           if (debug) println(s"Worker$id observe")
           sender ! Observe
           new Perception(perception.e, perception.load, attempt = None, perception.target)
@@ -47,7 +43,7 @@ class ProactiveWorker(id : Int) extends OperationalAgent(id) with ProactiveRule{
 
     // If the previous influence is failed
     case Failure =>
-      if (debug) println(s"Worker$id is informed that its previous influence succeed")
+      if (debug) println(s"Worker$id is informed that its previous influence ${perception.attempt} succeed")
       if (debug) println(s"Worker$id observes")
       sender ! Observe
   }

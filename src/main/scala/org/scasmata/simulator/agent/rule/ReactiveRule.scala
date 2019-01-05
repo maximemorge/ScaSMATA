@@ -2,7 +2,7 @@
 package org.scasmata.simulator.agent.rule
 
 import org.scasmata.simulator._
-import org.scasmata.environment.{Body, Packet}
+import org.scasmata.environment.{ActiveEntity, Body, Packet}
 import org.scasmata.simulator.agent.Perception
 
 /**
@@ -16,18 +16,19 @@ trait ReactiveRule extends OperationalRule{
     * 3. move randomly if possible
     */
   def takeAction(id: Int, perception: Perception) : Influence = {
-    val (i,j) = perception.e.location(perception.e.bodies(id))
+    val entity = perception.e.activeEntities(id)
+    val (i,j) = perception.e.location(entity)
     println(s"Agent$id in ($i,$j) decides")
     val neighborhood = perception.e.neighborhood(i,j)
     //1. put done packet if possible
     if (perception.load.isDefined && neighborhood.exists(c => c.hasDestination))
       return PutDown(perception.load.get)
     //2. merge with another body exists
-    if (perception.load.isEmpty && neighborhood.exists(c => c.hasBody)){
+    if (perception.load.isEmpty && neighborhood.exists(c => c.hasActiveEntity)){
       neighborhood.foreach { c =>
-        if (c.hasBody) {
-          val body : Body = c.content.get.asInstanceOf[Body]
-          return Merge(body)
+        if (c.hasActiveEntity) {
+          val e : ActiveEntity = c.content.get.asInstanceOf[ActiveEntity]
+          return Merge(e)
         }
       }
     }
@@ -36,7 +37,7 @@ trait ReactiveRule extends OperationalRule{
       neighborhood.foreach { c =>
         if (c.hasPacket) {
           val packet : Packet= c.content.get.asInstanceOf[Packet]
-          if (packet.size == 1) return PickUp(packet)
+          if (packet.size <=  entity.capacity) return PickUp(packet)
         }
       }
     }

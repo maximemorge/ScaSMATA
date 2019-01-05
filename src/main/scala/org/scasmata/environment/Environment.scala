@@ -12,7 +12,7 @@ import scala.util.Random
   * @param maxSizePackets maximal size of the packets (2 by default)
   */
 class Environment(val height: Int, val width: Int, val n: Int = 1, val m: Int = 1, val minSizePackets: Int = 1, val maxSizePackets: Int = 2) {
-  val debug = false
+  val debug = true
 
   //Create the grid and the maps of packets/bodies
   private val grid = Array.ofDim[Cell](height, width)
@@ -21,10 +21,14 @@ class Environment(val height: Int, val width: Int, val n: Int = 1, val m: Int = 
   var packets : Map[Int,Packet] = Map[Int,Packet]()
   var bodies : Map[Int,Body] = Map[Int,Body]()
   var crowds : Map[Int,Crowd]= Map[Int,Crowd]()
+  def activeEntities : Map[Int,ActiveEntity] = bodies ++ crowds
+
   // Number of packets which are putted down
   private var nbCollectedPackets = 0
   // Id of the next crowd
   private var nextCrowdId = n + 1
+
+
 
   // Number of active entities
   def nbActiveEntities : Int = bodies.size + crowds.size
@@ -247,7 +251,7 @@ class Environment(val height: Int, val width: Int, val n: Int = 1, val m: Int = 
   /**
     * Updates the environment when two entities merge
     */
-  def updateMerge(entity1: ActiveEntity, entity2: ActiveEntity): Unit = {
+  def updateMerge(entity1: ActiveEntity, entity2: ActiveEntity): Crowd = {
     bodies = bodies.filterKeys(id => id != entity1.id && id != entity2.id)
     crowds = crowds.filterKeys(id => id != entity1.id && id != entity2.id)
     val set : Set[Body]= (entity1 match {
@@ -268,6 +272,8 @@ class Environment(val height: Int, val width: Int, val n: Int = 1, val m: Int = 
     val (k,l) = location(entity2)
     grid(k)(l).setContent(None)
     grid(i)(j).setContent(Some(crowd))
+    if (debug) println(s"Nb activeEntitties $nbActiveEntities")
+    crowd
   }
 
   /**

@@ -2,14 +2,14 @@
 package org.scasmata.simulator.agent
 
 import akka.actor.{Actor, ActorRef, Props}
-import org.scasmata.environment.{Environment, Packet}
+import org.scasmata.environment.Environment
 import org.scasmata.simulator._
 
 /**
-  * Agent behaviour which orchestrates the worker and the negotiator
-  * @param id of the corresponding body
-  */
-
+  * Agent behaviour managing an ActiveEntity
+  * which orchestrates the worker and the negotiator
+  * @param id of the corresponding active entity
+*/
 class Agent(val id : Int) extends Actor {
   val debug = true
 
@@ -75,6 +75,6 @@ class Agent(val id : Int) extends Actor {
       context.stop(self)
     // In case of unexpected event
     case message =>
-      println(s"Agent$id has received an unexpected $message")
+      println(s"WARNING: Agent$id has received an unexpected $message")
   }
 }

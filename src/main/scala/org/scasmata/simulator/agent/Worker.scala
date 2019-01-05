@@ -1,7 +1,8 @@
 // Copyright (C) Maxime MORGE 2018
 package org.scasmata.simulator.agent
 
-import akka.actor.{Actor, ActorRef}
+import akka.actor.Actor
+
 import org.scasmata.environment.{Environment, Packet}
 import org.scasmata.simulator._
 import org.scasmata.simulator.agent.rule.OperationalRule
@@ -31,7 +32,7 @@ abstract class OperationalAgent(id : Int) extends Actor with OperationalRule {
       context.stop(self)
     // In case of unexpected event
     case msg =>
-      println(s"Worker$id has received an unexpected event {} with perception {}", msg, perception)
+      println(s"WARNING: Worker$id has received an unexpected event {} with perception {}", msg, perception)
 
   }
 }

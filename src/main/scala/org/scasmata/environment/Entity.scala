@@ -4,7 +4,9 @@ package org.scasmata.environment
 /**
   * An entity of the environment is active or passive
   */
-abstract class Entity
+abstract class Entity{
+
+}
 
 /**
   * A passive entity is a packet or the destination
@@ -21,8 +23,9 @@ class Destination() extends PassiveEntity{
 /**
   * A packet has an id and a size, eventually a color if it is targeted by an agent
   */
-class Packet(val id: Int, val size: Int, var color: Color = Brown) extends PassiveEntity{
+class Packet(val id: Int, val size: Int, var color: Color = Brown) extends PassiveEntity {
   override def toString: String = s"P$id($size)"
+
   /**
     * Two packets are equals if they have the same id
     */
@@ -39,7 +42,7 @@ class Packet(val id: Int, val size: Int, var color: Color = Brown) extends Passi
   * @param id of the entity which is equals to the agent id
   * @param load the entity eventually carries on a packet
   */
-case class ActiveEntity(id: Int, var load: Option[Packet] = None) extends Entity {
+case class ActiveEntity(val id: Int, var load: Option[Packet] = None) extends Entity {
   val capacity : Int = 0 // size of the packet it can carry on
 
   override def toString: String = s"AE$id($load)"
@@ -48,7 +51,7 @@ case class ActiveEntity(id: Int, var load: Option[Packet] = None) extends Entity
     */
   override def equals(that: Any): Boolean = {
     that match {
-      case that: Body => that.id == this.id
+      case that: ActiveEntity => that.id == this.id
       case _ => false
     }
   }
