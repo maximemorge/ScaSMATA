@@ -18,16 +18,21 @@ class Environment(val height: Int, val width: Int, val n: Int = 1, val m: Int = 
   private val grid = Array.ofDim[Cell](height, width)
   for (i <- 0 until height; j <- 0 until width)
     grid(i)(j) = new Cell(i,j)
-  var packets = Map[Int,Packet]()
-  var bodies  = Map[Int,Body]()
-  var coalitions = Map[Seq[Int],Coalition]()
+  var packets : Map[Int,Packet] = Map[Int,Packet]()
+  var bodies : Map[Int,Body] = Map[Int,Body]()
+  var crowds : Map[Int,Crowd]= Map[Int,Crowd]()
   // Number of packets which are putted down
   private var nbCollectedPackets = 0
+  // Id of the next crowd
+  private var nextCrowdId = n + 1
+
+  // Number of active entities
+  def nbActiveEntities : Int = bodies.size + crowds.size
 
   /**
     * Returns true if all the packets are collected
     */
-  def isClean() : Boolean = nbCollectedPackets == m
+  def isClean : Boolean = nbCollectedPackets == m
 
   //Initiate a random environment
   init()
@@ -40,12 +45,12 @@ class Environment(val height: Int, val width: Int, val n: Int = 1, val m: Int = 
       grid(i)(j).setContent(None)
     packets = Map[Int,Packet]()
     bodies  = Map[Int,Body]()
-    coalitions = Map[Seq[Int],Coalition]()
+    crowds = Map[Int,Crowd]()
     nbCollectedPackets = 0
   }
   /**
-    * Initiate a random environment such as each entity has no neighbor,
-    * such that the destination and the packets are available for each agent
+    * Initiate a random environment such as each entity has no neighbor, i.e.
+    * the destination and the packets are available for each agent
     */
   def init() : Unit = {
     val random = new Random
@@ -69,14 +74,14 @@ class Environment(val height: Int, val width: Int, val n: Int = 1, val m: Int = 
       coordinates --= Seq((i,j-1),(i,j+1),(i-1,j),(i+1,j),(i-1,j+1),(i-1,j-1),(i+1,j-1),(i+1,j+1))
       if (coordinates.isEmpty) throw new RuntimeException("Too many packets in the environment")
       if (debug) println(s"Add packet in ($i, $j)")
-      val newPacket = Packet(id = idPacket, size = minSizePackets+random.nextInt(maxSizePackets))
+      val newPacket = new Packet(id = idPacket, size = minSizePackets+random.nextInt(maxSizePackets))
       packets += (idPacket -> newPacket)
       grid(i)(j).setContent(Some(newPacket))
     }
     // Add the destination
     val (i, j) = coordinates.remove(random.nextInt(coordinates.length))
     if (debug) println(s"Add destination in ($i, $j)")
-    grid(i)(j).setContent(Some(Destination()))
+    grid(i)(j).setContent(Some(new Destination()))
     if (debug) println(this.toString)
   }
 
@@ -94,6 +99,14 @@ class Environment(val height: Int, val width: Int, val n: Int = 1, val m: Int = 
   def get(i: Int, j: Int): Cell = grid(i)(j)
 
   /**
+    * Returns the active entity according to the id
+    */
+  def getActiveEntity(id : Int) : ActiveEntity = {
+    if (id <= n) return bodies(id)
+    crowds(id)
+  }
+
+  /**
     * Returns a string representation of the environment
     */
   override def toString: String = {
@@ -107,30 +120,15 @@ class Environment(val height: Int, val width: Int, val n: Int = 1, val m: Int = 
     s
   }
 
-
   /**
     * Returns true if the cell (i,j) is empty
     */
   def isEmpty(i: Int, j: Int):  Boolean =  get(i,j).isEmpty
-  /* Returns the list of bodies
-  def bodies() : Iterable[AgentBody] = {
-    (for (j <- 0 until width; i <- 0 until height) yield {
-      grid(i)(j).content match {
-        case body : Some[AgentBody] => body
-        case _ => None
-      }
-    }).toIterable.filter(_.isDefined).map(_.get)
-  }*/
 
   /**
     * Returns true if the cell (i,j) is accessible, i.e. empty or contains a body
     */
   def isAccessible(i: Int, j: Int):  Boolean =  get(i,j).isAccessible
-
-  /**
-    * Returns the list of packets by size
-    */
-  def packetsOfSize(size : Int): Iterable[Packet] = packets.values.filter(_.size == size)
 
   /**
     * Returns the list of packets of size = 1
@@ -161,7 +159,7 @@ class Environment(val height: Int, val width: Int, val n: Int = 1, val m: Int = 
   def destinationLocation(): (Int,Int) = {
     for (j <- 0 until width; i <- 0 until height){
       grid(i)(j).content match {
-        case Some(Destination())  => return (i,j)
+        case Some(d : Destination)  => return (i,j)
         case _ =>
       }
     }
@@ -172,33 +170,31 @@ class Environment(val height: Int, val width: Int, val n: Int = 1, val m: Int = 
     * Returns the neighborhood of a cell
     */
   def neighborhood(i : Int, j : Int) : Seq[Cell] = {
-    var n = Seq[Cell]()
-    if (i>0) n :+=  get(i-1,j)
-    if (j>0) n :+= get(i,j-1)
-    //if (i>0 && j>0) n :+= get(i-1,j-1)
-    if (i< height-1) n :+=  get(i+1,j)
-    if (j< width-1) n :+=  get(i,j+1)
-    //if (j< width-1 && i< height-1) n :+=  get(i+1,j+1)
-    n
+    var neighbor = Seq[Cell]()
+    if (i>0) neighbor :+=  get(i-1,j)
+    if (j>0) neighbor :+= get(i,j-1)
+    if (i< height-1) neighbor :+=  get(i+1,j)
+    if (j< width-1) neighbor :+=  get(i,j+1)
+    neighbor
   }
 
   /**
     * Returns the possible directions for move from (i,j)
     */
-  def emptyDirection(i : Int, j : Int) : Seq[Direction] = {
+  def accessibleDirections(i : Int, j : Int) : Seq[Direction] = {
     var directions = Seq[Direction](Center)
-    if (i>0 && isEmpty(i-1,j)) directions +:= North
-    if (j>0 && isEmpty(i,j-1)) directions +:= West
-    if (i<height-1 && isEmpty(i+1,j)) directions +:= South
-    if (j<width-1 && isEmpty(i,j+1)) directions +:= East
+    if (i>0 && isAccessible(i-1,j)) directions +:= North
+    if (j>0 && isAccessible(i,j-1)) directions +:= West
+    if (i<height-1 && isAccessible(i+1,j)) directions +:= South
+    if (j<width-1 && isAccessible(i,j+1)) directions +:= East
     directions
   }
 
   /**
-    * Returns true if a move is possible, i.e. not in a destination or a packet
+    * Returns true if a move is possible, i.e. not in a passive entity
     */
-  def isAccessibleDirection(body : Body, d :Direction) : Boolean = {
-    val (i,j) = location(body)
+  def isAccessibleDirection(entity: ActiveEntity, d :Direction) : Boolean = {
+    val (i,j) = location(entity)
     d match {
       case North => i>0 && isAccessible(i-1,j)
       case West => j>0 && isAccessible(i,j-1)
@@ -249,42 +245,48 @@ class Environment(val height: Int, val width: Int, val n: Int = 1, val m: Int = 
   }
 
   /**
-    * Updates the environment when two bodies merge
+    * Updates the environment when two entities merge
     */
-  def updateMerge(body1: Body, body2: Body): Unit = {
-    val (i,j) = location(body1)
-    val (k,l) = location(body2)
-    bodies = bodies.filterKeys(id => id != body1.id && id != body2.id)
-    val coalition = new Coalition(Seq(body1.id,body2.id))
-    coalitions = coalitions + (coalition.ids -> coalition)
+  def updateMerge(entity1: ActiveEntity, entity2: ActiveEntity): Unit = {
+    bodies = bodies.filterKeys(id => id != entity1.id && id != entity2.id)
+    crowds = crowds.filterKeys(id => id != entity1.id && id != entity2.id)
+    val set : Set[Body]= (entity1 match {
+      case b : Body =>
+        Set(b)
+      case c : Crowd =>
+        c.bodies
+    }) | (entity2 match {
+      case b : Body =>
+        Set(b)
+      case c : Crowd =>
+        c.bodies
+    })
+    val crowd = new Crowd(nextCrowdId, None, set)
+    nextCrowdId += 1
+    crowds = crowds + (crowd.id -> crowd)
+    val (i,j) = location(entity1)
+    val (k,l) = location(entity2)
     grid(k)(l).setContent(None)
-    grid(i)(j).setContent(Some(coalition))
-  }
-
-
-  /**
-    * Update the environment with a target
-    */
-  def updateTarget(bodyId: Int, packet: Packet): Unit = {
-    if (debug) println(s"Environment is looking for packet $packet")
-    val (i,j) = location(packet)
-    packet.color = Color.BELONGINGS(bodyId)
-    grid(i)(j).setContent(Some(packet))
+    grid(i)(j).setContent(Some(crowd))
   }
 
   /**
     * Update the environment with a target
     */
-  def updateTarget(bodyIds: Seq[Int], packet: Packet): Unit = {
+  def updateTarget(id: Int, packet: Packet): Unit = {
     if (debug) println(s"Environment is looking for packet $packet")
     val (i,j) = location(packet)
-    packet.color = Color.COLLECTIVE_BELONGINGS(bodyIds)
+    packet.color = getActiveEntity(id) match {
+      case b : Body =>
+         Color.BELONGINGS(b.id)
+      case c : Crowd =>
+        Color.COLLECTIVE_BELONGINGS(c.ids)
+    }
     grid(i)(j).setContent(Some(packet))
   }
 
-
   /**
-    * Returns true if the destination is closed to the body
+    * Returns true if the destination is closed to the entity
     */
   def closedDestination(entity: ActiveEntity): Boolean = {
     val (i, j) = location(entity)
@@ -292,7 +294,7 @@ class Environment(val height: Int, val width: Int, val n: Int = 1, val m: Int = 
   }
 
   /**
-    * Returns true if the body is closed to a packet
+    * Returns true if the entity is closed to a packet
     */
   def closedPacket(entity: Entity): Boolean = {
     val (i, j) = location(entity)
@@ -300,7 +302,7 @@ class Environment(val height: Int, val width: Int, val n: Int = 1, val m: Int = 
   }
 
   /**
-    * Returns true if the body is closed to a packet
+    * Returns true if the entity is closed to a packet
     */
   def closedPacket(entity: ActiveEntity, packet: Packet): Boolean = {
     val (i, j) = location(entity)
@@ -308,19 +310,11 @@ class Environment(val height: Int, val width: Int, val n: Int = 1, val m: Int = 
   }
 
   /**
-    * Returns true if the body is closed to another one
+    * Returns true if the entity is closed to another one
     */
-  def closedBody(entity: Entity): Boolean = {
-    val (i, j) = location(entity)
-    neighborhood(i, j).exists(c => c.hasBody)
-  }
-
-  /**
-    * Returns true if the body is closed to another one
-    */
-  def closedBody(entity: Entity, body : Body): Boolean = {
-    val (i, j) = location(entity)
-    neighborhood(i, j).exists(c => c.hasBody(body))
+  def closed(entity1: Entity, entity2 : Entity): Boolean = {
+    val (i, j) = location(entity1)
+    neighborhood(i, j).exists(c => c.hasEntity(entity2))
   }
 }
 

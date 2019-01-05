@@ -2,29 +2,70 @@
 package org.scasmata.environment
 
 /**
-  * Entity in the environment are active entity, packets, destination or nothing (if the cell is empty)
+  * An entity of the environment is active or passive
   */
 abstract class Entity
-object Entity{
-  val size = 7 // to print
-}
+
+/**
+  * A passive entity is a packet or the destination
+  */
+case class PassiveEntity() extends Entity
 
 /**
   * Destination where to put packets
   */
-case class Destination() extends Entity{
+class Destination() extends PassiveEntity{
   override def toString: String = "D"
 }
 
-case class ActiveEntity(var load: Option[Packet] = None) extends Entity {
+/**
+  * A packet has an id and a size, eventually a color if it is targeted by an agent
+  */
+class Packet(val id: Int, val size: Int, var color: Color = Brown) extends PassiveEntity{
+  override def toString: String = s"P$id($size)"
+  /**
+    * Two packets are equals if they have the same id
+    */
+  override def equals(that: Any): Boolean = {
+    that match {
+      case that: Packet => that.id == this.id
+      case _ => false
+    }
+  }
+}
+
+/**
+  * An active entity can influence the environment
+  * @param id of the entity which is equals to the agent id
+  * @param load the entity eventually carries on a packet
+  */
+case class ActiveEntity(id: Int, var load: Option[Packet] = None) extends Entity {
+  val capacity : Int = 0 // size of the packet it can carry on
+
+  override def toString: String = s"AE$id($load)"
+  /**
+    * Two active entities are equals if they have the same id
+    */
+  override def equals(that: Any): Boolean = {
+    that match {
+      case that: Body => that.id == this.id
+      case _ => false
+    }
+  }
+
   /**
     * Returns the cost of the current load, i.e
     * the size of the packet eventually 0
     */
-  def charge() : Int = load match {
+  def charge : Int = load match {
     case Some(packet) => packet.size
     case None => 0
   }
+
+  /**
+    * Returns true if the entity is loaded
+    */
+  def isLoaded : Boolean = charge != 0
 
   /**
     * Carry a packet (setter of load)
@@ -40,55 +81,28 @@ case class ActiveEntity(var load: Option[Packet] = None) extends Entity {
     load = None
   }
 }
+
 /**
-  * An agent body has an id and it carries a packet or none
-  * @param id unique ID of the body which is equals to the agent id
-  * @param load the body carries on a packet, eventually none
+  * A body correspond to a micro-level agent
+  * @param id of the body which is equals to the agent id
+  * @param load the body eventually carries on a packet
   */
-class Body(val id: Int, load : Option[Packet] = None) extends ActiveEntity(load){
+class Body(id: Int, load : Option[Packet] = None) extends ActiveEntity(id, load){
+  override val capacity = 1 // size of the packet it can carry on
   override def toString: String = s"B$id($load)"
-
-  /**
-    * Two bodies are equals if they have the same id
-    */
-  override def equals(that: Any): Boolean = {
-    that match {
-      case that: Body => that.id == this.id
-      case _ => false
-    }
-  }
 }
 
 /**
-  * A coalition has a set of ids and it carries a packet or none
-  * @param ids IDs of the bodies which is equals to the agent id
-  * @param load the body carries on a packet, eventually none
+  * A crowd correspond to a macro-level agent
+  * @param id of the bodies which is equals to the agent id
+  * @param load the body eventually carries on a packet
+  * @param bodies which consist of the crowd
   */
-class Coalition(val ids: Seq[Int], load: Option[Packet] = None) extends ActiveEntity{
+class Crowd(id: Int, load: Option[Packet] = None, val bodies : Set[Body])
+  extends ActiveEntity(id, load){
+  override val capacity : Int = bodies.size // size of the packet it can carry on
   override def toString: String = s"C$ids($load)"
-  /**
-    * Two bodies are equals if they have the same ids
-    */
-  override def equals(that: Any): Boolean = {
-    that match {
-      case that: Coalition => that.ids == this.ids
-      case _ => false
-    }
-  }
-}
+  // The ids of the bodies
+  val ids  : Seq[Int] = bodies.map(b => b.id).toSeq.sorted
 
-/**
-  * A packet has an id and a size, eventually a color if it is targeted by an agent
-  */
-case class Packet(id: Int, size: Int, var color: Color = Brown) extends Entity{
-  override def toString: String = s"P$id($size)"
-  /**
-    * Two packets are equals if they have the same id
-    */
-  override def equals(that: Any): Boolean = {
-    that match {
-      case that: Packet => that.id == this.id
-      case _ => false
-    }
-  }
 }

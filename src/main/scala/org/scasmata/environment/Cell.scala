@@ -3,6 +3,7 @@ package org.scasmata.environment
 
 import java.awt.Image
 import javax.swing.ImageIcon
+
 import scala.swing.{Label, Publisher}
 import scala.swing.event.ValueChanged
 
@@ -14,13 +15,13 @@ import scala.swing.event.ValueChanged
 class Cell(i: Int, j : Int)extends Publisher{
   val debug = true
 
-  // The cell content is an entity, i.e. a body or a packet or a destination, eventually none
+  // The cell content is eventually an entity, i.e. an active entity or a packet or a destination
   var content : Option[Entity] = None
 
   override def toString: String = "|"+(content match {
     case Some(e) => s"$e"
     case None => " "
-  }).formatted(s"%${Cell.CELL_SIZE}s")
+  }).formatted(s"%${Cell.CELL_LENGTH}s")
 
   /**
     * Returns the cell representation within a label with an icon
@@ -28,14 +29,14 @@ class Cell(i: Int, j : Int)extends Publisher{
   def label() : Label = {
     // path of the icon
     val path = (content match {
-      case Some(Destination()) =>
+      case Some(_: Destination) =>
         "brownPlace"
       case Some(b : Body) =>
-        if (b.load.isEmpty) "fig"+ b.id.toString
-        else  "fig"+b.id.toString+"load"
-      case Some(c : Coalition) =>
-        if (c.load.isEmpty) "fig"+c.ids.sorted.map(_.toString).reduce((left, right) => s"$left$right")
-        else  "fig"+c.ids.map(_.toString).reduce((left, right) => s"$left$right")+"load"
+        "fig"+b.id.toString +
+          (if (b.load.isDefined) "load" else "")
+      case Some(c : Crowd) =>
+        "fig"+c.ids.sorted.map(_.toString).reduce((left, right) => s"$left$right") +
+          (if (c.load.isDefined) "load" else "")
       case Some(p : Packet) =>
         p.color.toString+p.size.toString
       case _ =>
@@ -66,11 +67,25 @@ class Cell(i: Int, j : Int)extends Publisher{
     */
   def isAccessible : Boolean = content match {
     case None => true
-    case Some(_ : Body) => true
-    case Some(_ : Coalition) => true
-    case Some(_ : Destination) => false
-    case Some(_ : Packet) => false
+    case Some(_ : ActiveEntity) => true
+    case Some(_ : PassiveEntity) => false
     case _ => throw new RuntimeException("Unexpected content of cell")
+  }
+
+  /**
+    * Returns true if the cell contains an ActiveEntity
+    */
+  def hasActiveEntity : Boolean = content match {
+    case Some(_: ActiveEntity) => true
+    case _ => false
+  }
+
+  /**
+    * Returns true if the cell contains a PassiveEntity
+    */
+  def hasPassiveEntity : Boolean = content match {
+    case Some(_: PassiveEntity) => true
+    case _ => false
   }
 
   /**
@@ -114,11 +129,20 @@ class Cell(i: Int, j : Int)extends Publisher{
       case Some(b: Body) if b == body=> true
       case _ => false
     }
+
+  /**
+    * Return true if the cell  contains a particular entity
+    */
+  def hasEntity(entity: Entity) : Boolean =
+    content match {
+      case Some(e: Entity) if e == entity=> true
+      case _ => false
+    }
 }
 
 /**
   * Companion object for class variable
   */
 object Cell{
-val CELL_SIZE = 8
+val CELL_LENGTH = 8 // length of the string representation
 }

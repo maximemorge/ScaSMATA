@@ -2,7 +2,7 @@
 package org.scasmata.simulator
 
 import akka.actor.ActorRef
-import org.scasmata.environment.{Body, Direction, Environment, Packet}
+import org.scasmata.environment._
 
 /**
   * ManagingMessage
@@ -53,8 +53,8 @@ case class PickUp(packet: Packet) extends Influence() { // pick up a particular 
 case class PutDown(packet: Packet) extends Influence() { // put down a particular packet in a colored destination
   override def toString: String = s"PutDown($packet)"
 }
-case class Merge(body: Body) extends Influence() { // merge with another body
-  override def toString: String = s"Merge($body)"
+case class Merge(entity: ActiveEntity) extends Influence() { // merge with another active entity
+  override def toString: String = s"Merge($entity)"
 }
 
 /**
