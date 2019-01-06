@@ -120,7 +120,7 @@ class UI(val e: Environment) extends Actor {
         case(id,nbSteps) => result+=s"Agent$id : $nbSteps steps\n"
       }
       result+="Max= "+steps.values.max+"\n"
-      result+="Mean= "+steps.values.sum/steps.values.size+"\n"
+      result+="Mean= "+steps.values.sum.toDouble/steps.values.size+"\n"
       Dialog.showMessage(mainFrame,result, title="OK")
 
     case msg@_ =>

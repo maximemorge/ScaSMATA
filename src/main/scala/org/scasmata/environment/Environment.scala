@@ -12,7 +12,7 @@ import scala.util.Random
   * @param maxSizePackets maximal size of the packets (2 by default)
   */
 class Environment(val height: Int, val width: Int, val n: Int = 1, val m: Int = 1, val minSizePackets: Int = 1, val maxSizePackets: Int = 2) {
-  val debug = true
+  val debug = false
 
   //Create the grid and the maps of packets/bodies
   private val grid = Array.ofDim[Cell](height, width)
@@ -27,8 +27,6 @@ class Environment(val height: Int, val width: Int, val n: Int = 1, val m: Int = 
   private var nbCollectedPackets = 0
   // Id of the next crowd
   private var nextCrowdId = n + 1
-
-
 
   // Number of active entities
   def nbActiveEntities : Int = bodies.size + crowds.size
@@ -259,11 +257,15 @@ class Environment(val height: Int, val width: Int, val n: Int = 1, val m: Int = 
         Set(b)
       case c : Crowd =>
         c.bodies
+      case _ =>
+        throw new RuntimeException("An active entity is expected for merge")
     }) | (entity2 match {
       case b : Body =>
         Set(b)
       case c : Crowd =>
         c.bodies
+      case _ =>
+        throw new RuntimeException("An active entity is expected for merge")
     })
     val crowd = new Crowd(nextCrowdId, None, set)
     nextCrowdId += 1
@@ -287,6 +289,8 @@ class Environment(val height: Int, val width: Int, val n: Int = 1, val m: Int = 
          Color.BELONGINGS(b.id)
       case c : Crowd =>
         Color.COLLECTIVE_BELONGINGS(c.ids)
+      case _ =>
+        throw new RuntimeException("An active entity is expected for having a target")
     }
     grid(i)(j).setContent(Some(packet))
   }

@@ -39,6 +39,8 @@ class ProactiveWorker(id : Int) extends OperationalAgent(id) with ProactiveRule{
           if (debug) println(s"Worker$id observe")
           sender ! Observe
           new Perception(perception.e, perception.load, attempt = None, perception.target)
+        case _ =>
+          throw new RuntimeException(s"Worker$id should have memorized an attempt since it successes")
       }
 
     // If the previous influence is failed

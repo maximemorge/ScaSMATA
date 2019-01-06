@@ -42,7 +42,7 @@ class ReactiveWorker(id : Int) extends OperationalAgent(id) with ReactiveRule{
           if (debug) println(s"Worker$id observes")
           sender ! Observe
           new Perception(perception.e, perception.load, attempt = None, None)
-        case None =>
+        case _ =>
           throw new RuntimeException(s"Worker$id does not understand success of None")
       }
     // The previous influence is failed

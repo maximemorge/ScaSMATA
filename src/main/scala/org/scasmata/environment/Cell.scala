@@ -13,7 +13,7 @@ import scala.swing.event.ValueChanged
   * @param j the column
   */
 class Cell(i: Int, j : Int)extends Publisher{
-  val debug = true
+  val debug = false
 
   // The cell content is eventually an entity, i.e. an active entity or a packet or a destination
   var content : Option[Entity] = None

@@ -9,7 +9,7 @@ package org.scasmata.environment
   * @param oj column of the origin
   */
 class Dijkstra(e : Environment, oi : Int, oj : Int) {
-  val debug = true
+  val debug = false
 
   //Create and initiate the matrix of distances
   private val distance = Array.ofDim[Int](e.height, e.width)

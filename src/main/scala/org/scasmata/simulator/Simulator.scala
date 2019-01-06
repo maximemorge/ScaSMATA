@@ -35,6 +35,9 @@ class Simulator(val e: Environment, val delay : Int = 0) extends Actor{
   private var step = 0
   // Number of steps performed by the agents
   private var steps = Map[Int, Int]()
+  e.bodies.foreach{ case (id,_) =>
+    steps += (id -> 0)
+  }
   // Map id/influence
   private var influences = Map[Int, Influence]()
 
@@ -153,6 +156,7 @@ class Simulator(val e: Environment, val delay : Int = 0) extends Actor{
     */
   def stop() : Unit = {
     if (debug) println("Simulator ends")
+    reallocateSteps()
     runner ! Outcome(steps)
     directory.allAgents().foreach( _ ! Kill)
   }
@@ -248,6 +252,21 @@ class Simulator(val e: Environment, val delay : Int = 0) extends Actor{
     if (debug) println(s"Merge($target) by $origin failure")
     directory.adr(origin.id) ! Failure
     reciprocal(tail)
+  }
+
+  /**
+    * Reallocate the steps of crowds toward the bodies
+    */
+  def reallocateSteps() : Unit = {
+    // for each crowd
+    e.crowds.filterKeys(_ > e.n).foreach{ case (crowdId,_) =>
+      // for each body within the crowd
+      e.crowds(crowdId).bodies.foreach{ body =>
+        steps += (body.id -> (steps.getOrElse(body.id,0)+steps.getOrElse(crowdId,0)))
+      }
+    }
+    // filter steps for only bodies
+    steps = steps.filterKeys( _ <= e.n)
   }
 }
 
