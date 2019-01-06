@@ -56,6 +56,10 @@ case class PutDown(packet: Packet) extends Influence() { // put down a particula
 case class Merge(entity: ActiveEntity) extends Influence() { // merge with another active entity
   override def toString: String = s"Merge($entity)"
 }
+case object Split extends Influence() { // split the sub-entities
+  override def toString: String = s"Split"
+}
+
 
 /**
   * Reaction
