@@ -37,7 +37,7 @@ In order to compile the code you need:
 
 ## Usage
 
-    java -jar ScaSMATA-assembly-0.1.jar
+    java -jar ScaSMATA-assembly-X.Y.jar
 
 
 ## Installation
@@ -48,7 +48,7 @@ Compile
 
 then
 
-    sbt "run org.scasmata.util.UI"
+    sbt "run org.scasmata.util.Main"
 
 and eventually
 
