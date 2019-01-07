@@ -21,7 +21,17 @@ class Environment(val height: Int, val width: Int, val n: Int = 1, val m: Int = 
   var packets : Map[Int,Packet] = Map[Int,Packet]()
   var bodies : Map[Int,Body] = Map[Int,Body]()
   var crowds : Map[Int,Crowd]= Map[Int,Crowd]()
+
+  /**
+    * Returns the map of active entities
+    */
   def activeEntities : Map[Int,ActiveEntity] = bodies ++ crowds
+
+  /**
+    * Return true if an active entity is a crow
+    */
+  def isCrowd(id : Int) : Boolean = id > n
+
 
   // Number of packets which are putted down
   private var nbCollectedPackets = 0
@@ -192,6 +202,7 @@ class Environment(val height: Int, val width: Int, val n: Int = 1, val m: Int = 
     directions
   }
 
+
   /**
     * Returns true if a move is possible, i.e. not in a passive entity
     */
@@ -276,6 +287,24 @@ class Environment(val height: Int, val width: Int, val n: Int = 1, val m: Int = 
     grid(i)(j).setContent(Some(crowd))
     if (debug) println(s"Nb activeEntitties $nbActiveEntities")
     crowd
+  }
+
+  /**
+    * Updates the environment when a crowd split and returns the set of bodies eventually none
+    */
+  def updateSplit(crowd: Crowd): Set[Body] = {
+    val newBodies = crowd.bodies
+    val (i,j) = location(crowd)
+    var possiblePlaces = neighborhood(i,j).filter(_.isEmpty)
+    if (possiblePlaces.length < newBodies.size) return Set()
+    crowds = crowds.filterKeys(_ != crowd.id)
+    grid(i)(j).setContent(None)
+    newBodies.foreach{ body =>
+      bodies = bodies + (body.id -> body)
+      possiblePlaces.head.setContent(Some(body))
+      possiblePlaces = possiblePlaces.tail
+    }
+    newBodies
   }
 
   /**

@@ -41,7 +41,11 @@ trait ReactiveRule extends OperationalRule{
         }
       }
     }
-    //4. move randomly if possible
+    // 4. split
+    if (perception.e.isCrowd(id) && neighborhood.exists(c => c.hasDestination)){
+      return Split()
+    }
+    //5. move randomly if possible
     val directions = perception.e.accessibleDirections(i,j)
     Move(directions(rnd.nextInt(directions.length)))
   }

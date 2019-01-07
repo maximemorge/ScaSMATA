@@ -10,7 +10,7 @@ import akka.util.Timeout
 
 import scala.concurrent.duration._
 import scala.language.postfixOps
-import org.scasmata.environment.{ActiveEntity, Body, Center, Environment}
+import org.scasmata.environment.{ActiveEntity, Center, Environment}
 import org.scasmata.simulator.agent.Agent
 
 /**
@@ -169,6 +169,8 @@ class Simulator(val e: Environment, val delay : Int = 0) extends Actor{
     val pickUps = influences.collect{ case (id, influence: PickUp) => (id, influence) }
     val putDowns = influences.collect{ case (id, influence : PutDown) => (id, influence) }
     val moves = influences.collect { case (id, influence : Move) => (id, influence) }
+    val splits = influences.collect { case (id, influence : Split) => (id, influence) }
+
     val merges  = reciprocal(influences.collect{ case (id, influence : Merge) => (id, influence) } toList)
 
     // 1 - process pick up
@@ -230,6 +232,23 @@ class Simulator(val e: Environment, val delay : Int = 0) extends Actor{
         directory.add(crowd.id, actor) // Add it to the directory
         init()
         actor ! Update(e)
+    }
+
+    //5 - TODO process split
+    splits.foreach{
+      case (id,Split()) =>
+        val newBodies = e.updateSplit(e.crowds(id))
+        if (newBodies.isEmpty) directory.adr(id) ! Failure
+        directory.adr(id) ! Kill
+        directory.remove(id, directory.adr(id))
+        newBodies.foreach{ b=>
+          val actor = context.actorOf(Props(classOf[Agent], b.id), b.id.toString)
+          directory.add(b.id, actor) // Add it to the directory
+        }
+        init()
+        newBodies.foreach { b =>
+          directory.adr(b.id) ! Update(e)
+        }
     }
     false
   }
