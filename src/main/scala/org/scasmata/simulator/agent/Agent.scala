@@ -15,7 +15,7 @@ class Agent(val id : Int) extends Actor {
 
   var simulator: ActorRef = context.parent
   var directory: Directory = new Directory()
-  var worker : ActorRef= context.actorOf(Props(classOf[ReactiveWorker], id), "worker"+id.toString)
+  var worker : ActorRef= context.actorOf(Props(classOf[ProactiveWorker], id), "worker"+id.toString)
   var negotiator : ActorRef= context.actorOf(Props(classOf[Negotiator], id), "negotiator"+id.toString)
 
   var vision: Environment = _

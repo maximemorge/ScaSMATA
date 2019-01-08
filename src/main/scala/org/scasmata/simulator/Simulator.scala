@@ -177,7 +177,7 @@ class Simulator(val e: Environment, val delay : Int = 0) extends Actor{
     pickUps.foreach{
       case (id,PickUp(packet)) =>
         val entity = e.activeEntities(id)
-        if (packet.size > entity.capacity || entity.load.isDefined || ! e.closed(entity,packet)) {
+        if (packet.size > entity.capacity || entity.load.isDefined || ! e.closedPacket(entity,packet)) {
           if (debug) println(s"Pickup(packet) by $entity failure")
           directory.adr(id) ! Failure
         }
@@ -263,7 +263,7 @@ class Simulator(val e: Environment, val delay : Int = 0) extends Actor{
     val target = influence.entity
     val tail = merges.tail
     if (tail.contains((target.id,Merge(origin))) &&
-      e.closed(origin, target) &&
+      e.closedActiveEntity(origin, target) &&
       origin.load.isEmpty && target.load.isEmpty
     ) {
       return reciprocal(tail) :+ (origin, target)

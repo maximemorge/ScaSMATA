@@ -131,11 +131,11 @@ class Cell(i: Int, j : Int)extends Publisher{
     }
 
   /**
-    * Return true if the cell  contains a particular entity
+    * Returns true if the cell contains a particular active entity
     */
-  def hasEntity(entity: Entity) : Boolean =
+  def hasActiveEntity(entity: ActiveEntity) : Boolean =
     content match {
-      case Some(e: Entity) if e == entity=> true
+      case Some(e: ActiveEntity) if e == entity => true
       case _ => false
     }
 }

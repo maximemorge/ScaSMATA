@@ -1,6 +1,8 @@
 // Copyright (C) Maxime MORGE 2018
 package org.scasmata.environment
 
+import javax.print.attribute.standard.Destination
+
 import scala.collection.mutable.ListBuffer
 import scala.util.Random
 
@@ -349,11 +351,13 @@ class Environment(val height: Int, val width: Int, val n: Int = 1, val m: Int = 
   }
 
   /**
-    * Returns true if the entity is closed to another one
+    * Returns true if the entity is closed to a packet
     */
-  def closed(entity1: Entity, entity2 : Entity): Boolean = {
+  def closedActiveEntity(entity1: ActiveEntity, entity2: ActiveEntity): Boolean = {
     val (i, j) = location(entity1)
-    neighborhood(i, j).exists(c => c.hasEntity(entity2))
+    neighborhood(i, j).exists(c => c.hasActiveEntity(entity2))
   }
+
+
 }
 

@@ -34,7 +34,7 @@ trait ProactiveRule extends OperationalRule{
     val target = perception.target.get
     val place = perception.e.location(target)
     if (debug) println(s"Agent$id has target $target in $place")
-    if (perception.e.closed(entity,target)){
+    if (perception.e.closedPacket(entity,target)){
       if (debug) println(s"Agent$id picks $target since it is closed")
       return PickUp(target)
     }
