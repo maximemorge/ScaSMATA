@@ -1,8 +1,6 @@
 // Copyright (C) Maxime MORGE 2018
 package org.scasmata.environment
 
-import javax.print.attribute.standard.Destination
-
 import scala.collection.mutable.ListBuffer
 import scala.util.Random
 
