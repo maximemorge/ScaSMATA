@@ -46,9 +46,6 @@ class Environment(val height: Int, val width: Int, val n: Int = 1, val m: Int = 
     */
   def isClean : Boolean = nbCollectedPackets == m
 
-  //Initiate a random environment
-  init()
-
   /**
     * Clear the environment
     */

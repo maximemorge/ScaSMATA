@@ -11,7 +11,7 @@ abstract class Entity{
 /**
   * A passive entity is a packet or the destination
   */
-case class PassiveEntity() extends Entity
+class PassiveEntity() extends Entity
 
 /**
   * Destination where to put packets
