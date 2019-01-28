@@ -38,7 +38,7 @@ class Cell(i: Int, j : Int)extends Publisher{
         "fig"+c.ids.sorted.map(_.toString).reduce((left, right) => s"$left$right") +
           (if (c.load.isDefined) "load" else "")
       case Some(p : Packet) =>
-        p.color.toString+p.size.toString
+        p.color.toString+p.weight.toString
       case _ =>
         "nothing"
     }) + ".png"

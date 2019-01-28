@@ -23,8 +23,8 @@ class Destination() extends PassiveEntity{
 /**
   * A packet has an id and a size, eventually a color if it is targeted by an agent
   */
-class Packet(val id: Int, val size: Int, var color: Color = Brown) extends PassiveEntity {
-  override def toString: String = s"P$id($size)"
+class Packet(val id: Int, val weight: Int, var color: Color = Brown) extends PassiveEntity {
+  override def toString: String = s"P$id($weight)"
 
   /**
     * Two packets are equals if they have the same id
@@ -61,7 +61,7 @@ case class ActiveEntity(val id: Int, var load: Option[Packet] = None) extends En
     * the size of the packet eventually 0
     */
   def charge : Int = load match {
-    case Some(packet) => packet.size
+    case Some(packet) => packet.weight
     case None => 0
   }
 

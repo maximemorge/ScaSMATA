@@ -11,7 +11,7 @@ import org.scasmata.simulator._
   */
 
 class Negotiator(val id : Int) extends Actor {
-  val debug = true
+  val debug = false
 
   var directory: Directory = _
   var vision : Environment = _
@@ -29,7 +29,7 @@ class Negotiator(val id : Int) extends Actor {
     case QueryTargets(e) =>
         vision = e
         val targets=vision.packets.values.filter{ p : Packet =>
-          p.id % vision.n +1 == id && p.size <= e.activeEntities(id).capacity
+          p.id % vision.n +1 == id && p.weight <= e.activeEntities(id).capacity
         }.toSeq
         sender ! ReplyTargets(targets)
     // The negotiator is killed

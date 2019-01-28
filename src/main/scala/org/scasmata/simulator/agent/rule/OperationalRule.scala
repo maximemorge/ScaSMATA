@@ -10,7 +10,7 @@ import org.scasmata.simulator.agent.Perception
   * Abstract decision rule
   */
 trait OperationalRule{
-  val debug = true
+  val debug = false
   val rnd : ThreadLocalRandom = ThreadLocalRandom.current()
 
   /**

@@ -11,7 +11,7 @@ import org.scasmata.simulator._
   * @param id of the corresponding active entity
 */
 class Agent(val id : Int) extends Actor {
-  val debug = true
+  val debug = false
 
   var simulator: ActorRef = context.parent
   var directory: Directory = new Directory()
@@ -48,7 +48,7 @@ class Agent(val id : Int) extends Actor {
     case ReplyTargets(targets) =>
       this.simulator ! Inform(targets)
       val nexTarget = targets.headOption
-      if (nexTarget.isEmpty || nexTarget.get.size == 1){
+      if (nexTarget.isEmpty || nexTarget.get.weight == 1){
         worker ! Delegate(nexTarget,vision)
       }else{
         //TODO

@@ -16,7 +16,7 @@ trait ProactiveRule extends OperationalRule{
   def takeAction(id: Int, perception: Perception) : Influence = {
     val entity = perception.e.activeEntities(id)
     val (i,j) = perception.e.location(entity)
-    println(s"Agent$id in ($i,$j) decides")
+    if (debug) println(s"Agent$id in ($i,$j) decides")
     if (perception.load.isDefined) {
       if (debug) println(s"Agent$id is loaded")
       if (perception.e.closedDestination(entity)) {

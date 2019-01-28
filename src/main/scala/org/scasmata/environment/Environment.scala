@@ -83,7 +83,7 @@ class Environment(val height: Int, val width: Int, val n: Int = 1, val m: Int = 
       coordinates --= Seq((i,j-1),(i,j+1),(i-1,j),(i+1,j),(i-1,j+1),(i-1,j-1),(i+1,j-1),(i+1,j+1))
       if (coordinates.isEmpty) throw new RuntimeException("Too many packets in the environment")
       if (debug) println(s"Add packet in ($i, $j)")
-      val newPacket = new Packet(id = idPacket, size = minSizePackets+random.nextInt(maxSizePackets))
+      val newPacket = new Packet(id = idPacket, weight = minSizePackets+random.nextInt(maxSizePackets))
       packets += (idPacket -> newPacket)
       grid(i)(j).setContent(Some(newPacket))
     }
@@ -142,12 +142,12 @@ class Environment(val height: Int, val width: Int, val n: Int = 1, val m: Int = 
   /**
     * Returns the list of packets of size = 1
     */
-  def lightweightPackets(): Iterable[Packet] = packets.values.filter(_.size == 1)
+  def lightweightPackets(): Iterable[Packet] = packets.values.filter(_.weight == 1)
 
   /**
     * Returns the list of packets of size > 1
     */
-  def heavyPackets(): Iterable[Packet] = packets.values.filter(_.size > 1)
+  def heavyPackets(): Iterable[Packet] = packets.values.filter(_.weight > 1)
 
   /**
     * Returns the coordinates of an entity
@@ -251,6 +251,7 @@ class Environment(val height: Int, val width: Int, val n: Int = 1, val m: Int = 
     val (i,j) = location(entity)
     entity.unload()
     nbCollectedPackets +=1
+    println(s"NbCollectedPackets $nbCollectedPackets")
     grid(i)(j).setContent(Some(entity))
   }
 

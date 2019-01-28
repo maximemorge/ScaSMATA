@@ -18,7 +18,7 @@ trait ReactiveRule extends OperationalRule{
   def takeAction(id: Int, perception: Perception) : Influence = {
     val entity = perception.e.activeEntities(id)
     val (i,j) = perception.e.location(entity)
-    println(s"Agent$id in ($i,$j) decides")
+    if (debug) println(s"Agent$id in ($i,$j) decides")
     val neighborhood = perception.e.neighborhood(i,j)
     //1. put done packet if possible
     if (perception.load.isDefined && neighborhood.exists(c => c.hasDestination))
@@ -37,7 +37,7 @@ trait ReactiveRule extends OperationalRule{
       neighborhood.foreach { c =>
         if (c.hasPacket) {
           val packet : Packet= c.content.get.asInstanceOf[Packet]
-          if (packet.size <=  entity.capacity) return PickUp(packet)
+          if (packet.weight <=  entity.capacity) return PickUp(packet)
         }
       }
     }

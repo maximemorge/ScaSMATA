@@ -5,6 +5,7 @@ version := "0.3"
 mainClass in (Compile,run) := Some("org.scasmata.util.Main")
 mainClass in assembly := Some("org.scasmata.util.Main")
 
+trapExit := false
 
 resolvers += "Artifactory-UCL" at "http://artifactory.info.ucl.ac.be/artifactory/libs-snapshot-local/"
 resolvers += "Typesafe Repository" at "http://repo.typesafe.com/typesafe/releases/"

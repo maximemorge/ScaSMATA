@@ -30,7 +30,7 @@ class Simulator(val e: Environment, val delay : Int = 0) extends Actor{
   // The actor which triggers the simulation and gathers the steps
   private var runner : ActorRef= context.parent
   // White page id/agent
-  private var directory = new Directory()
+  private val directory = new Directory()
   // Number of simulation steps
   private var step = 0
   // Number of steps performed by the agents
@@ -45,7 +45,6 @@ class Simulator(val e: Environment, val delay : Int = 0) extends Actor{
     * Start simulator
     */
   e.bodies.values.foreach { body =>
-    if (debug) println(s"Simulator creates an agent for body ${body.id}")
     val actor = context.actorOf(Props(classOf[Agent], body.id), body.id.toString)
     directory.add(body.id, actor) // Add it to the directory
   }
@@ -54,11 +53,10 @@ class Simulator(val e: Environment, val delay : Int = 0) extends Actor{
     *  Initiation of the agents with the directory
     */
   def init() : Unit = {
-    if (debug) println(s"Simulator initiates all agents")
+    if (debug) println(s"Simulator starts")
     directory.allAgents().foreach { a =>
       val future = a ? Init(directory)
       Await.result(future, timeout.duration) == Ready
-      if (debug) println("Simulator receives ready")
     }
   }
 
@@ -71,7 +69,6 @@ class Simulator(val e: Environment, val delay : Int = 0) extends Actor{
     //When the simulator plays
     case Play =>
       runner = sender
-      if (debug) println("Simulator runs")
       directory.allAgents().foreach { actor: ActorRef => //Trigger them
         actor ! Update(e)
       }
@@ -85,7 +82,7 @@ class Simulator(val e: Environment, val delay : Int = 0) extends Actor{
         triggerTimerIfRequired()
       } else {
         // Otherwise wait for other actions
-        if (debug) println(s"Simulator waits for other influences")
+        //if (debug) println(s"Simulator waits for other influences")
       }
     //When the simulator plays next step
     case Next =>
@@ -93,7 +90,7 @@ class Simulator(val e: Environment, val delay : Int = 0) extends Actor{
         triggerTimerIfRequired()
       } else {
         // Otherwise wait for other actions
-        if (debug) println(s"Simulator waits for other influences")
+        //if (debug) println(s"Simulator waits for other influences")
       }
     //When the simulator is killed
     case Kill =>
@@ -103,7 +100,7 @@ class Simulator(val e: Environment, val delay : Int = 0) extends Actor{
     case Observe =>
       try {
         val id = directory.id(sender)
-        if (debug) println(s"Simulator updates $id")
+        //if (debug) println(s"Simulator updates $id")
         sender ! Update(e)
       }catch {
         case _: Throwable => println("WARNING: Simulator does not update agents which are already dead")
@@ -111,12 +108,12 @@ class Simulator(val e: Environment, val delay : Int = 0) extends Actor{
     //When an actor informs the simulator about its target
     case Inform(targets) =>
       val id = directory.id(sender)
-      if (debug) println(s"Simulator updates $id's targets")
+      //if (debug) println(s"Simulator updates $id's targets")
       targets.foreach(packet =>e.updateTarget(id, packet))
     // When an agent wants to act
     case influence: Influence =>
       val id = directory.id(sender)
-      if (debug) println(s"Simulator receives $influence from $id")
+      if (debug) println(s"Agent$id performs $influence")
       influences = influences + (id -> influence)
       // Count the steps
       if (influence != Move(Center))  steps += (id-> (steps.getOrElse(id,0)+1))
@@ -124,14 +121,14 @@ class Simulator(val e: Environment, val delay : Int = 0) extends Actor{
         triggerTimerIfRequired()
       } else {
         // Otherwise wait for other actions
-        if (debug) println(s"Simulator waits for other influences or replay")
+        //if (debug) println(s"Simulator waits for other influences or replay")
       }
     // When the timeout for the reaction is received
     case Go =>
       if (debug) println(s"Simulator computes the reactions")
       val finished = react()
-      if (debug) println(s"Stop $finished")
       if (finished) {
+        if (debug) println(s"Simulator stops")
         stop()
       }
       influences = Map[Int, Influence]()
@@ -177,7 +174,7 @@ class Simulator(val e: Environment, val delay : Int = 0) extends Actor{
     pickUps.foreach{
       case (id,PickUp(packet)) =>
         val entity = e.activeEntities(id)
-        if (packet.size > entity.capacity || entity.load.isDefined || ! e.closedPacket(entity,packet)) {
+        if (packet.weight > entity.capacity || entity.load.isDefined || ! e.closedPacket(entity,packet)) {
           if (debug) println(s"Pickup(packet) by $entity failure")
           directory.adr(id) ! Failure
         }
