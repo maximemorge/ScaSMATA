@@ -46,7 +46,7 @@ In order to compile the code you need:
 
 Clone
 
-    git clone https://github.com/cristal-smac/ScaMATA
+    git clone https://github.com/maximemorge/ScaSMATA
     git submodule init
     git submodule update
 
@@ -64,10 +64,11 @@ and eventually
     sbt assembly
 
 
-## Contributors
+## Authors
 
 Copyright (C) Maxime MORGE 2019
 
+Additional contributors: 
 - Quentin BRIAND
 - Florian LECOINTE
 
