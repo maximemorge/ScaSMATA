@@ -1,0 +1,3 @@
+[submodule "ScaMATA"]
+	path = ScaMATA
+	url = https://github.com/cristal-smac/ScaMATA

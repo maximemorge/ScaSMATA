@@ -37,8 +37,7 @@ abstract class Message
 case object Ready extends Message // The agent is ready to talk to the other agents
 abstract class ObservationMessage extends Message
 case object Observe extends ObservationMessage // The agent observe the environment through the simulator
-case class Update(environment : Environment) extends ObservationMessage // The agent is informed about the environment state
-case class Inform(targets: Seq[Packet]) extends  ObservationMessage// The agents informs the simulator about its targets
+case class Update(environment : Environment, targets: Seq[Packet]) extends ObservationMessage // The agent is informed about the environment state and the targets to collect
 
 /**
   * Influence

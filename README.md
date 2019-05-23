@@ -42,13 +42,22 @@ In order to compile the code you need:
 
 ## Installation
 
+<!--- https://git-scm.com/book/fr/v2/Utilitaires-Git-Sous-modules -->
+
+Clone
+
+    git clone https://github.com/cristal-smac/ScaMATA
+    git submodule init
+    git submodule update
+
 Compile
 
     sbt compile
 
 then
 
-    sbt "run org.scasmata.util.Main"
+    sbt 
+    sbt:ScaSMATA> run org.scasmata.util.Main
 
 and eventually
 
@@ -57,7 +66,10 @@ and eventually
 
 ## Contributors
 
-Copyright (C) Maxime MORGE 2018
+Copyright (C) Maxime MORGE 2019
+
+- Quentin BRIAND
+- Florian LECOINTE
 
 ## License
 

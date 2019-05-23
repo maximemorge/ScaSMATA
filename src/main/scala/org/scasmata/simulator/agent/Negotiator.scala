@@ -6,7 +6,7 @@ import org.scasmata.environment.{Environment, Packet, ActiveEntity}
 import org.scasmata.simulator._
 
 /**
-  * Negotiaor which plans targeted packets
+  * Deprecated negotiator which plans targeted packets
   * @param id of the corresponding body
   */
 

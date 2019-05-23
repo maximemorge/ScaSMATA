@@ -10,7 +10,7 @@ import akka.util.Timeout
 
 import scala.concurrent.duration._
 import scala.language.postfixOps
-import org.scasmata.environment.{ActiveEntity, Center, Environment}
+import org.scasmata.environment.{ActiveEntity, Center, Environment, Packet}
 import org.scasmata.simulator.agent.Agent
 
 /**
@@ -22,7 +22,7 @@ import org.scasmata.simulator.agent.Agent
   * @param delay  waiting time before a reaction
   * */
 class Simulator(val e: Environment, val delay : Int = 0) extends Actor{
-  val debug = true
+  val debug = false
   // Default timeout of starting agent
   private val TIMEOUT_VALUE: FiniteDuration = 10 seconds
   implicit val timeout: Timeout = Timeout(TIMEOUT_VALUE)
@@ -40,6 +40,8 @@ class Simulator(val e: Environment, val delay : Int = 0) extends Actor{
   }
   // Map id/influence
   private var influences = Map[Int, Influence]()
+  // MASTA scheduler
+  private val scheduler = new Scheduler(e)
 
   /**
     * Start simulator
@@ -62,6 +64,7 @@ class Simulator(val e: Environment, val delay : Int = 0) extends Actor{
 
   init()
 
+
   /**
     * Message handling
     */
@@ -70,7 +73,8 @@ class Simulator(val e: Environment, val delay : Int = 0) extends Actor{
     case Play =>
       runner = sender
       directory.allAgents().foreach { actor: ActorRef => //Trigger them
-        actor ! Update(e)
+        scheduler.assign()
+        actor ! Update(e, scheduler.targets(directory.id(actor)))
       }
     //When the simulator is in Pause
     case Pause =>
@@ -100,16 +104,11 @@ class Simulator(val e: Environment, val delay : Int = 0) extends Actor{
     case Observe =>
       try {
         val id = directory.id(sender)
-        //if (debug) println(s"Simulator updates $id")
-        sender ! Update(e)
+        scheduler.assign()
+        sender ! Update(e,scheduler.targets(id))
       }catch {
         case _: Throwable => println("WARNING: Simulator does not update agents which are already dead")
       }
-    //When an actor informs the simulator about its target
-    case Inform(targets) =>
-      val id = directory.id(sender)
-      //if (debug) println(s"Simulator updates $id's targets")
-      targets.foreach(packet =>e.updateTarget(id, packet))
     // When an agent wants to act
     case influence: Influence =>
       val id = directory.id(sender)
@@ -228,7 +227,7 @@ class Simulator(val e: Environment, val delay : Int = 0) extends Actor{
         val actor = context.actorOf(Props(classOf[Agent], crowd.id), crowd.id.toString)
         directory.add(crowd.id, actor) // Add it to the directory
         init()
-        actor ! Update(e)
+        actor ! Update(e,Seq.empty[Packet])//The new crowd has no target
     }
 
     //5 - TODO process split
@@ -244,7 +243,7 @@ class Simulator(val e: Environment, val delay : Int = 0) extends Actor{
         }
         init()
         newBodies.foreach { b =>
-          directory.adr(b.id) ! Update(e)
+          directory.adr(b.id) ! Update(e,Seq.empty[Packet])//The bodies has no target
         }
     }
     false

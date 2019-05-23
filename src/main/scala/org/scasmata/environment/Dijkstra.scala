@@ -2,7 +2,7 @@
 package org.scasmata.environment
 
 /**
-  * Implementation fo Dijkstra's algorithm
+  * Implementation of Dijkstra's algorithm
   * for finding the shortest paths from a origin cell in an environment
   * @param e the environment
   * @param oi line of the origin
@@ -12,7 +12,7 @@ class Dijkstra(e : Environment, oi : Int, oj : Int) {
   val debug = false
 
   //Create and initiate the matrix of distances
-  private val distance = Array.ofDim[Int](e.height, e.width)
+  val distance : Array[Array[Int]] = Array.ofDim[Int](e.height, e.width)
   for (i <- 0 until e.height; j <- 0 until e.width){ // all the cells are far away
     distance(i)(j) = Int.MaxValue
   }
@@ -28,7 +28,7 @@ class Dijkstra(e : Environment, oi : Int, oj : Int) {
   private var predecessor = Map[(Int,Int),(Int,Int)]()
 
   /**
-    * find a unexplored cell with a minimal distance from the source and (-1,-1) if none
+    * Find a unexplored cell with a minimal distance from the source and (-1,-1) if none
     */
   private def findMinDistanceUnexploredCell() : (Int,Int) = {
     var min = Int.MaxValue
@@ -133,6 +133,19 @@ class Dijkstra(e : Environment, oi : Int, oj : Int) {
     if (i<oi) return North
     if (j>oj) return East
     West
+  }
+
+  /**
+    * Returns the minimal distance in order to go next to (dx,dy)
+    * with the shortest path
+   */
+  def distanceNeighbor(dx : Int, dy : Int) : Int = {
+    var minPathLenght = Int.MaxValue
+    e.neighborhood(dx,dy).foreach{ cell : Cell =>
+      val pathLenght = distance(cell.i)(cell.j)
+      if (pathLenght < minPathLenght) minPathLenght = pathLenght
+    }
+    minPathLenght
   }
 
   /**

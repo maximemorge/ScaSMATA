@@ -15,7 +15,7 @@ class Agent(val id : Int) extends Actor {
 
   var simulator: ActorRef = context.parent
   var directory: Directory = new Directory()
-  var worker : ActorRef= context.actorOf(Props(classOf[ReactiveWorker], id), "worker"+id.toString)
+  var worker : ActorRef= context.actorOf(Props(classOf[ProactiveOperationalAgent], id), "worker"+id.toString)
   var negotiator : ActorRef= context.actorOf(Props(classOf[Negotiator], id), "negotiator"+id.toString)
 
   var vision: Environment = _
@@ -39,19 +39,15 @@ class Agent(val id : Int) extends Actor {
     case Ready =>
       simulator ! Ready
     // The perception is updated
-    case Update(e) =>
+    case Update(e,targets) =>
       this.simulator = sender
       if (debug) println(s"Agent$id is updated")
       vision = e
-      negotiator ! QueryTargets(vision)
-    // The negotiator has chosen a target
-    case ReplyTargets(targets) =>
-      this.simulator ! Inform(targets)
       val nexTarget = targets.headOption
       if (nexTarget.isEmpty || nexTarget.get.weight == 1){
         worker ! Delegate(nexTarget,vision)
       }else{
-        //TODO
+        println("Agent$id has no more feasible target")
       }
   }
 

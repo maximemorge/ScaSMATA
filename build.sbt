@@ -1,9 +1,11 @@
 name := "ScaSMATA"
 
-version := "0.3"
+version := "0.4"
 
 mainClass in (Compile,run) := Some("org.scasmata.util.Main")
 mainClass in assembly := Some("org.scasmata.util.Main")
+
+unmanagedSourceDirectories in Compile += baseDirectory.value / "ScaMATA/src"
 
 trapExit := false
 

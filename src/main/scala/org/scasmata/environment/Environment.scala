@@ -353,7 +353,5 @@ class Environment(val height: Int, val width: Int, val n: Int = 1, val m: Int = 
     val (i, j) = location(entity1)
     neighborhood(i, j).exists(c => c.hasActiveEntity(entity2))
   }
-
-
 }
 

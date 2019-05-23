@@ -12,7 +12,7 @@ import scala.swing.event.ValueChanged
   * @param i the row
   * @param j the column
   */
-class Cell(i: Int, j : Int)extends Publisher{
+class Cell(val i: Int, val j : Int) extends Publisher{
   val debug = false
 
   // The cell content is eventually an entity, i.e. an active entity or a packet or a destination
