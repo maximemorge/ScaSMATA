@@ -34,7 +34,7 @@ class Scheduler(e: Environment){
     val solverMATA = new ECTSolver(pb,LCmax)
     if (debug) println(s"Scheduler assign allocation: $solverMATA")
     val allocation = solverMATA.run()
-    generateAssignment(allocation)
+    generateAssignment(allocation,pb)
   }
 
   /**
@@ -72,12 +72,15 @@ class Scheduler(e: Environment){
   /**
     * Generate assignment from a MATA allocation and update the color of packets in the environment
     * @param allocation of a MATA
+    * @param pb
     */
-  def generateAssignment(allocation: Allocation) : Unit ={
+  def generateAssignment(allocation: Allocation, pb : MATA) : Unit ={
     for((worker,bundle) <- allocation.bundle){
+      // Sort the bundle in descending order on the basis of the cost
+      val orderedBundle : Seq[Task] = bundle.toSeq.sortWith( pb.costMatrix(worker,_) > pb.costMatrix(worker,_))
       val idWorker = name2id(worker.name)
       var targets = Seq.empty[Packet]
-      for (task <- bundle){
+      for (task <- orderedBundle){
         val idTask = name2id(task.name)
         val packet = e.packets(idTask)
         targets = targets :+ packet
