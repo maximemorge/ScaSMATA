@@ -52,12 +52,16 @@ class Scheduler(e: Environment){
     var costMatrix = Map[(Worker,Task), Double]()
     for(worker <-  workers){
       val (xs,ys) = e.location(e.activeEntities(name2id(worker.name))) //source
-      val dijkstra = new Dijkstra(e,xs,ys)
-      dijkstra.run()
+      val dijkstraSource = new Dijkstra(e,xs,ys)
+      dijkstraSource.run()
       for (task <- tasks){
         val (xd,yd) = e.location(e.packets(name2id(task.name)))//destination
-        val value : Double  = dijkstra.distanceNeighbor(xd,yd)
-        costMatrix = costMatrix + ( (worker,task) -> value )
+        val dijkstraDestination = new Dijkstra(e,xd,yd)
+        dijkstraDestination.run()
+        val costRound : Double  = dijkstraSource.distanceNeighbor(xd,yd)
+        val costTrip : Double = dijkstraDestination.distanceNeighbor(e.destinationLocation()._1,e.destinationLocation()._2)
+        val cost = costRound + costTrip + 2.0 // Pick up and drop down packet
+        costMatrix = costMatrix + ( (worker,task) -> cost )
         }
       }
     if (debug) println(s"Scheduler buildMATA workers:  $workers")
