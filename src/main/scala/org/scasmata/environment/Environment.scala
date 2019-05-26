@@ -8,6 +8,8 @@ import scala.util.Random
   * A representation of the environment which contains 1 destination, n agents and m packets
   * @param height of the environment
   * @param width of the environment
+  * @param n number of bodies
+  * @param m number of packets
   * @param minSizePackets minimal size of the packets (1 by default)
   * @param maxSizePackets maximal size of the packets (2 by default)
   */
