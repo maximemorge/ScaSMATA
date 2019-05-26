@@ -44,23 +44,22 @@ class Scheduler(e: Environment){
     val tasks: SortedSet[Task] = collection.immutable.SortedSet[Task]() ++ {
         for ((idPacket,_) <- e.packets) yield new Task(name = s"Packet$idPacket")
       }
-
     val workers: SortedSet[Worker] = collection.immutable.SortedSet[Worker]() ++ {
       for ((idActiveEntity,_) <- e.activeEntities) yield new Worker(name = s"ActiveEntity$idActiveEntity")
     }
-
     var costMatrix = Map[(Worker,Task), Double]()
+    val (xd,yd) = e.destinationLocation()
     for(worker <-  workers){
       val (xs,ys) = e.location(e.activeEntities(name2id(worker.name))) //source
       val dijkstraSource = new Dijkstra(e,xs,ys)
       dijkstraSource.run()
       for (task <- tasks){
-        val (xd,yd) = e.location(e.packets(name2id(task.name)))//destination
-        val dijkstraDestination = new Dijkstra(e,xd,yd)
-        dijkstraDestination.run()
-        val costRound : Double  = dijkstraSource.distanceNeighbor(xd,yd)
-        val costTrip : Double = dijkstraDestination.distanceNeighbor(e.destinationLocation()._1,e.destinationLocation()._2)
-        val cost = costRound + costTrip + 2.0 // Pick up and drop down packet
+        val (xt,yt) = e.location(e.packets(name2id(task.name))) // target
+        val dijkstraPacket = new Dijkstra(e,xt,yt)
+        dijkstraPacket.run()
+        val costRound : Double  = dijkstraSource.distanceNeighbor(xt,yt)
+        val costTrip : Double = dijkstraPacket.distanceNeighbor(xd,yd)
+        val cost = costRound + 1.0 + costTrip + 1.0 // reach packet + pick up + reach destination + drop packet
         costMatrix = costMatrix + ( (worker,task) -> cost )
         }
       }
