@@ -85,16 +85,14 @@ class Simulator(val e: Environment, val delay : Int = 0) extends Actor{
       if (influences.keys.size == e.nbActiveEntities) { // Compute reaction
         triggerTimerIfRequired()
       } else {
-        // Otherwise wait for other actions
-        //if (debug) println(s"Simulator waits for other influences")
+        if (debug) println(s"Simulator waits for other influences")
       }
     //When the simulator plays next step
     case Next =>
       if (influences.keys.size == e.nbActiveEntities) { // Compute reaction
         triggerTimerIfRequired()
       } else {
-        // Otherwise wait for other actions
-        //if (debug) println(s"Simulator waits for other influences")
+        if (debug) println(s"Simulator waits for other influences")
       }
     //When the simulator is killed
     case Kill =>
@@ -104,7 +102,6 @@ class Simulator(val e: Environment, val delay : Int = 0) extends Actor{
     case Observe =>
       try {
         val id = directory.id(sender)
-        scheduler.assign()
         sender ! Update(e,scheduler.targets(id))
       }catch {
         case _: Throwable => println("WARNING: Simulator does not update agents which are already dead")
@@ -119,8 +116,7 @@ class Simulator(val e: Environment, val delay : Int = 0) extends Actor{
       if (influences.keys.size == e.nbActiveEntities && !pause) { // Compute reaction
         triggerTimerIfRequired()
       } else {
-        // Otherwise wait for other actions
-        //if (debug) println(s"Simulator waits for other influences or replay")
+        if (debug) println(s"Simulator waits for other influences or replay")
       }
     // When the timeout for the reaction is received
     case Go =>
@@ -199,7 +195,8 @@ class Simulator(val e: Environment, val delay : Int = 0) extends Actor{
             if (debug) println(s"There is no more packets")
             return true
           }
-          if (debug) println(s"There is still packets")
+          if (debug) println(s"There is still some packets")
+          scheduler.assign()
         }
     }
     //3- process moves
