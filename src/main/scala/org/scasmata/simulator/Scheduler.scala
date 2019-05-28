@@ -2,27 +2,30 @@
 package org.scasmata.simulator
 
 import org.scasmata.environment.{ActiveEntity, Dijkstra, Environment, Packet}
-
-import org.scamata.core.{MATA, Allocation, Task, Worker}
+import org.scamata.core.{Allocation, MATA, Task, Worker}
 import org.scamata.solver._
 import org.scasmata.util.ParseUtils._
+import org.scasmata.util.{SchedulerRule, ECTRule, RandomRule}
 
 import scala.collection.SortedSet
 
 /**
   * Scheduler which assigns packets to activeEntities
+  * @param environment where packets are spread
+  * @param rule to choose the MATA solver
   **/
-class Scheduler(e: Environment){
+class Scheduler(environment: Environment, rule : SchedulerRule){
   val debug = true
 
   // Map ActiveEntity -> Plan
   private var assignment = Map[ActiveEntity, Seq[Packet]]()//Agent's references
 
   /**
-    * Returns the targets of a specific activeEntity
+    * Return the targets of a specific active entity
+    * @param id of the activeEntity
     */
-  def targets(idActiveEntity : Int) : Seq[Packet] = {
-    assignment(e.activeEntities(idActiveEntity))
+  def targets(id : Int) : Seq[Packet] = {
+    assignment(environment.activeEntities(id))
   }
 
   /**
@@ -31,7 +34,11 @@ class Scheduler(e: Environment){
   def assign() :  Unit = {
     val pb = buildMATA()
     if (debug) println(s"Scheduler assign pb: $pb")
-    val solverMATA = new ECTSolver(pb,LCmax)
+    val solverMATA = rule match {
+      case ECTRule => new ECTSolver(pb,LCmax)
+      case RandomRule => new RandomSolver(pb,LCmax)
+    }
+
     if (debug) println(s"Scheduler assign allocation: $solverMATA")
     val allocation = solverMATA.run()
     generateAssignment(allocation,pb)
@@ -42,20 +49,20 @@ class Scheduler(e: Environment){
     */
   def buildMATA(): MATA = {
     val tasks: SortedSet[Task] = collection.immutable.SortedSet[Task]() ++ {
-        for ((idPacket,_) <- e.packets) yield new Task(name = s"Packet$idPacket")
+        for ((idPacket,_) <- environment.packets) yield new Task(name = s"Packet$idPacket")
       }
     val workers: SortedSet[Worker] = collection.immutable.SortedSet[Worker]() ++ {
-      for ((idActiveEntity,_) <- e.activeEntities) yield new Worker(name = s"ActiveEntity$idActiveEntity")
+      for ((idActiveEntity,_) <- environment.activeEntities) yield new Worker(name = s"ActiveEntity$idActiveEntity")
     }
     var costMatrix = Map[(Worker,Task), Double]()
-    val (xd,yd) = e.destinationLocation()
+    val (xd,yd) = environment.destinationLocation()
     for(worker <-  workers){
-      val (xs,ys) = e.location(e.activeEntities(name2id(worker.name))) //source
-      val dijkstraSource = new Dijkstra(e,xs,ys)
+      val (xs,ys) = environment.location(environment.activeEntities(name2id(worker.name))) //source
+      val dijkstraSource = new Dijkstra(environment,xs,ys)
       dijkstraSource.run()
       for (task <- tasks){
-        val (xt,yt) = e.location(e.packets(name2id(task.name))) // target
-        val dijkstraPacket = new Dijkstra(e,xt,yt)
+        val (xt,yt) = environment.location(environment.packets(name2id(task.name))) // target
+        val dijkstraPacket = new Dijkstra(environment,xt,yt)
         dijkstraPacket.run()
         val costRound : Double  = dijkstraSource.distanceNeighbor(xt,yt)
         val costTrip : Double = dijkstraPacket.distanceNeighbor(xd,yd)
@@ -82,11 +89,11 @@ class Scheduler(e: Environment){
       var targets = Seq.empty[Packet]
       for (task <- orderedBundle){
         val idTask = name2id(task.name)
-        val packet = e.packets(idTask)
+        val packet = environment.packets(idTask)
         targets = targets :+ packet
       }
-      targets.foreach(packet =>e.updateTarget(idWorker, packet))
-      assignment +=  (e.activeEntities(idWorker) -> targets)
+      targets.foreach(packet =>environment.updateTarget(idWorker, packet))
+      assignment +=  (environment.activeEntities(idWorker) -> targets)
     }
   }
 }

@@ -15,12 +15,15 @@ import org.scasmata.simulator._
 
 /**
   * Class representing the user interface
-  * @param e where agent interacts
+  * @param configuration of the simulation
   */
-class UI(val e: Environment) extends Actor {
+class UI(val configuration: Configuration) extends Actor {
 
+  val e = new Environment(configuration.height, configuration.width, configuration.n, configuration.m,
+            configuration.minSizePackets, configuration.maxSizePackets)
+  e.init()
   var delay = 250 //with 250ms of delay
-  var simulator = context.actorOf(Props(classOf[Simulator], e, delay), "Simulator"+Simulator.nextId)//Run simulator
+  var simulator = context.actorOf(Props(classOf[Simulator], e, configuration.behaviour, configuration.rule, delay), "Simulator"+Simulator.nextId)//Run simulator
 
   val mainFrame = new MainFrame(){
     title = "ScaSMATA (Scalable Situated Multi-Agent Task Allocation) GUI"
@@ -32,9 +35,14 @@ class UI(val e: Environment) extends Actor {
     // North : button
     private val toolPanel : BoxPanel =
     new BoxPanel(Orientation.Horizontal) {
+      contents += Button("Reset") {
+        val initUI = new ConfigurationFrame(configuration)
+        initUI.visible = true
+        close()
+      }
       contents += Button("New") {
         e.reInit()
-        simulator = context.actorOf(Props(classOf[Simulator], e, delay), "Simulator" + Simulator.nextId) //Run simulator with 250ms of delay
+        simulator = context.actorOf(Props(classOf[Simulator], e, configuration.behaviour, configuration.rule, delay), "Simulator" + Simulator.nextId) //Run simulator with 250ms of delay
         isRunning = 0
       }
       contents += Button("Play/Pause") {

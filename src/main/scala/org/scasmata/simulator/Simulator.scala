@@ -12,6 +12,7 @@ import scala.concurrent.duration._
 import scala.language.postfixOps
 import org.scasmata.environment.{ActiveEntity, Center, Environment, Packet}
 import org.scasmata.simulator.agent.Agent
+import org.scasmata.util.{Behaviour, SchedulerRule}
 
 /**
   * Simulator which :
@@ -19,10 +20,12 @@ import org.scasmata.simulator.agent.Agent
   * - computes the reactions
   * - updates the environment
   * @param e current state of the environment
+  * @param behaviour of the operational agents
+  * @param rule for scheduling the gathering round
   * @param delay  waiting time before a reaction
   * */
-class Simulator(val e: Environment, val delay : Int = 0) extends Actor{
-  val debug = false
+class Simulator(val e: Environment, val behaviour: Behaviour, val rule : SchedulerRule, val delay : Int = 0) extends Actor{
+  val debug = true
   // Default timeout of starting agent
   private val TIMEOUT_VALUE: FiniteDuration = 10 seconds
   implicit val timeout: Timeout = Timeout(TIMEOUT_VALUE)
@@ -41,13 +44,13 @@ class Simulator(val e: Environment, val delay : Int = 0) extends Actor{
   // Map id/influence
   private var influences = Map[Int, Influence]()
   // MASTA scheduler
-  private val scheduler = new Scheduler(e)
+  private val scheduler = new Scheduler(e,rule)
 
   /**
     * Start simulator
     */
   e.bodies.values.foreach { body =>
-    val actor = context.actorOf(Props(classOf[Agent], body.id), body.id.toString)
+    val actor = context.actorOf(Props(classOf[Agent], body.id, behaviour), body.id.toString)
     directory.add(body.id, actor) // Add it to the directory
   }
 
@@ -221,7 +224,7 @@ class Simulator(val e: Environment, val delay : Int = 0) extends Actor{
         directory.remove(entity1.id, directory.adr(entity1.id))
         directory.remove(entity2.id, directory.adr(entity2.id))
         val crowd = e.updateMerge(entity1, entity2)
-        val actor = context.actorOf(Props(classOf[Agent], crowd.id), crowd.id.toString)
+        val actor = context.actorOf(Props(classOf[Agent], crowd.id, behaviour), crowd.id.toString)
         directory.add(crowd.id, actor) // Add it to the directory
         init()
         actor ! Update(e,Seq.empty[Packet])//The new crowd has no target
@@ -235,7 +238,7 @@ class Simulator(val e: Environment, val delay : Int = 0) extends Actor{
         directory.adr(id) ! Kill
         directory.remove(id, directory.adr(id))
         newBodies.foreach{ b=>
-          val actor = context.actorOf(Props(classOf[Agent], b.id), b.id.toString)
+          val actor = context.actorOf(Props(classOf[Agent], b.id, behaviour), b.id.toString)
           directory.add(b.id, actor) // Add it to the directory
         }
         init()

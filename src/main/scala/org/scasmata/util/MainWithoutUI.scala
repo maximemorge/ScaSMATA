@@ -18,10 +18,11 @@ object MainWithoutUI{
   def main(args: Array[String]): Unit = {
     val TIMEOUT_VALUE : FiniteDuration = 6000 minutes // Default timeout of a run
     implicit val timeout : Timeout = Timeout(TIMEOUT_VALUE)
-    val e = new Environment(height = 4, width = 8, n = 2, m =3, maxSizePackets = 1)
+    val conf = new Configuration()
+    val e = new Environment(conf.height, conf.width, conf.n, conf.m , conf.maxSizePackets)
     e.init()
     val system = ActorSystem("Solver") //The Actor system
-    val simulator = system.actorOf(Props(classOf[Simulator], e, 0), "Simulator")
+    val simulator = system.actorOf(Props(classOf[Simulator], e, conf.behaviour, conf.rule, 0), "Simulator")
     val future = simulator ? Play
     val result = Await.result(future, timeout.duration).asInstanceOf[Outcome]
     result.steps.foreach{ case (bodyId,step) =>

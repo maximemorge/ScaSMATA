@@ -2,20 +2,27 @@
 package org.scasmata.simulator.agent
 
 import akka.actor.{Actor, ActorRef, Props}
+
 import org.scasmata.environment.Environment
 import org.scasmata.simulator._
+import org.scasmata.util.{Behaviour,Proactive,Reactive}
 
 /**
   * Agent behaviour managing an ActiveEntity
   * which orchestrates the worker and the negotiator
   * @param id of the corresponding active entity
+  * @param behaviour of the operational agent
 */
-class Agent(val id : Int) extends Actor {
+class Agent(val id : Int, val behaviour: Behaviour) extends Actor {
   val debug = false
 
   var simulator: ActorRef = context.parent
   var directory: Directory = new Directory()
-  var worker : ActorRef= context.actorOf(Props(classOf[ProactiveOperationalAgent], id), "worker"+id.toString)
+  var worker : ActorRef= behaviour match {
+    case Proactive => context.actorOf(Props(classOf[ProactiveOperationalAgent], id), "worker"+id.toString)
+    case Reactive => context.actorOf(Props(classOf[ReactiveOperationalAgent], id), "worker"+id.toString)
+  }
+
   var negotiator : ActorRef= context.actorOf(Props(classOf[Negotiator], id), "negotiator"+id.toString)
 
   var vision: Environment = _
