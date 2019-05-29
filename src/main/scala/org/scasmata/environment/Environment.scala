@@ -85,7 +85,7 @@ class Environment(val height: Int, val width: Int, val n: Int = 1, val m: Int = 
       coordinates --= Seq((i,j-1),(i,j+1),(i-1,j),(i+1,j),(i-1,j+1),(i-1,j-1),(i+1,j-1),(i+1,j+1))
       if (coordinates.isEmpty) throw new RuntimeException("Too many packets in the environment")
       if (debug) println(s"Add packet in ($i, $j)")
-      val newPacket = new Packet(id = idPacket, weight = minSizePackets+random.nextInt(maxSizePackets))
+      val newPacket = new Packet(id = idPacket, weight = minSizePackets+random.nextInt(maxSizePackets-minSizePackets+1))
       packets += (idPacket -> newPacket)
       grid(i)(j).setContent(Some(newPacket))
     }
