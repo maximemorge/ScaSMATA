@@ -5,7 +5,7 @@ import org.scasmata.environment.{ActiveEntity, Dijkstra, Environment, Packet}
 import org.scamata.core.{Allocation, MATA, Task, Worker}
 import org.scamata.solver._
 import org.scasmata.util.ParseUtils._
-import org.scasmata.util.{SchedulerRule, ECTRule, RandomRule}
+import org.scasmata.util.{SchedulingRule, ECTRule, RandomRule}
 
 import scala.collection.SortedSet
 
@@ -14,7 +14,7 @@ import scala.collection.SortedSet
   * @param environment where packets are spread
   * @param rule to choose the MATA solver
   **/
-class Scheduler(environment: Environment, rule : SchedulerRule){
+class Scheduler(environment: Environment, rule : SchedulingRule){
   val debug = true
 
   // Map ActiveEntity -> Plan
@@ -38,7 +38,6 @@ class Scheduler(environment: Environment, rule : SchedulerRule){
       case ECTRule => new ECTSolver(pb,LCmax)
       case RandomRule => new RandomSolver(pb,LCmax)
     }
-
     if (debug) println(s"Scheduler assign allocation: $solverMATA")
     val allocation = solverMATA.run()
     generateAssignment(allocation,pb)

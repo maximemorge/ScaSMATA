@@ -13,17 +13,31 @@ sealed abstract class Behaviour extends Product with Serializable{
 case object Proactive extends Behaviour
 case object Reactive extends Behaviour
 
+object Behaviour{
+  val behaviours : Seq[Behaviour] = Seq(Proactive, Reactive)
+}
+
+
+
 /**
   * Rule for scheduling the gathering round
   */
-sealed abstract class SchedulerRule extends Product with Serializable{
+sealed abstract class SchedulingRule extends Product with Serializable{
   override def toString: String = this match{
     case RandomRule => "RandomRule"
     case ECTRule => "ECTRule"
+    case NoRule => "NoRule"
   }
 }
-case object RandomRule extends SchedulerRule
-case object ECTRule extends SchedulerRule
+case object RandomRule extends SchedulingRule
+case object ECTRule extends SchedulingRule
+case object NoRule extends SchedulingRule
+
+
+object SchedulingRule{
+  val schedulingRules: Seq[SchedulingRule] = Seq(ECTRule, RandomRule, NoRule)
+}
+
 
 /**
   * Class representing a simulation configuration
@@ -37,6 +51,6 @@ case object ECTRule extends SchedulerRule
   * @param rule for scheduling the gathering round
   */
 class Configuration(val height: Int = 8, val width: Int = 16, val n: Int = 4, val m: Int = 8, val minSizePackets: Int = 1, val maxSizePackets: Int = 1,
-                    val behaviour: Behaviour = Proactive, val rule : SchedulerRule = ECTRule) {
+                    val behaviour: Behaviour = Proactive, val rule : SchedulingRule = ECTRule) {
 }
 

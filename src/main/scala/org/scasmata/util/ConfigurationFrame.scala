@@ -4,7 +4,7 @@ package org.scasmata.util
 import scala.swing._
 import akka.actor.{ActorSystem, Props}
 
-import scala.swing.event.ValueChanged
+import scala.swing.event.{EditDone, SelectionChanged}
 import akka.actor.{Actor, Props}
 import akka.util.Timeout
 
@@ -12,14 +12,15 @@ import scala.language.postfixOps
 
 /**
   * Class representing the configuration frame
+  *
   * @param configuration of the simulation
   */
-class ConfigurationFrame(configuration: Configuration) extends MainFrame{
-
+class ConfigurationFrame(configuration: Configuration) extends MainFrame {
+  val debug = true
   title = "ScaSMATA configuration"
 
   // Setup the environment based on the current configuration
-  var width = new ComboBox((8 to 32 by 2).reverse)
+  var width = new ComboBox((8 to 16 by 2).reverse)
   width.selection.item = configuration.width
   var height = new ComboBox((4 to 8).reverse)
   height.selection.item = configuration.height
@@ -33,10 +34,38 @@ class ConfigurationFrame(configuration: Configuration) extends MainFrame{
   maxSizePackets.selection.item = configuration.maxSizePackets
 
   // Setup the simulation  based on the current configuration
-  val behaviour = new ComboBox(Seq(Proactive, Reactive))
+  val behaviour = new ComboBox(Behaviour.behaviours)
   behaviour.selection.item = configuration.behaviour
-  val rule = new ComboBox(Seq(ECTRule, RandomRule))
+  val rule = new ComboBox(SchedulingRule.schedulingRules)
   rule.selection.item = configuration.rule
+
+  // Warrant the coherence in the configuration
+  listenTo(minSizePackets.selection, maxSizePackets.selection, behaviour.selection, rule.selection)
+  reactions += {
+    case SelectionChanged(`behaviour`) =>
+      behaviour.selection.item match {
+        case Reactive =>
+        rule.selection.item = NoRule
+        rule.peer.setEditable(false)
+        case Proactive =>
+          rule.selection.item = ECTRule
+          rule.peer.setEditable(true)
+      }
+    case SelectionChanged(`rule`) =>
+      rule.selection.item match {
+        case NoRule =>
+          behaviour.selection.item = Reactive
+          behaviour.peer.setEditable(false)
+        case _ =>
+          behaviour.selection.item = Proactive
+          behaviour.peer.setEditable(true)
+      }
+    case SelectionChanged(`minSizePackets`) =>
+      maxSizePackets.selection.item = Math.max(maxSizePackets.selection.item, minSizePackets.selection.item)
+    case SelectionChanged(`maxSizePackets`) =>
+      minSizePackets.selection.item = Math.min(maxSizePackets.selection.item, minSizePackets.selection.item)
+  }
+
 
   // Main panel
   contents = new GridPanel(9, 2) {

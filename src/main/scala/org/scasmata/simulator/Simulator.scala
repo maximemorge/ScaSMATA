@@ -12,7 +12,7 @@ import scala.concurrent.duration._
 import scala.language.postfixOps
 import org.scasmata.environment.{ActiveEntity, Center, Environment, Packet}
 import org.scasmata.simulator.agent.Agent
-import org.scasmata.util.{Behaviour, SchedulerRule}
+import org.scasmata.util.{Behaviour, Proactive, Reactive, SchedulingRule}
 
 /**
   * Simulator which :
@@ -24,8 +24,8 @@ import org.scasmata.util.{Behaviour, SchedulerRule}
   * @param rule for scheduling the gathering round
   * @param delay  waiting time before a reaction
   * */
-class Simulator(val e: Environment, val behaviour: Behaviour, val rule : SchedulerRule, val delay : Int = 0) extends Actor{
-  val debug = true
+class Simulator(val e: Environment, val behaviour: Behaviour, val rule : SchedulingRule, val delay : Int = 0) extends Actor{
+  val debug = false
   // Default timeout of starting agent
   private val TIMEOUT_VALUE: FiniteDuration = 10 seconds
   implicit val timeout: Timeout = Timeout(TIMEOUT_VALUE)
@@ -75,9 +75,16 @@ class Simulator(val e: Environment, val behaviour: Behaviour, val rule : Schedul
     //When the simulator plays
     case Play =>
       runner = sender
+      behaviour match {
+        case Proactive => scheduler.assign()
+        case Reactive =>
+      }
       directory.allAgents().foreach { actor: ActorRef => //Trigger them
-        scheduler.assign()
-        actor ! Update(e, scheduler.targets(directory.id(actor)))
+        val targets = behaviour match {
+          case Proactive => scheduler.targets(directory.id(actor))
+          case _ => Seq.empty[Packet]
+        }
+        actor ! Update(e, targets)
       }
     //When the simulator is in Pause
     case Pause =>
@@ -105,7 +112,11 @@ class Simulator(val e: Environment, val behaviour: Behaviour, val rule : Schedul
     case Observe =>
       try {
         val id = directory.id(sender)
-        sender ! Update(e,scheduler.targets(id))
+        val targets = behaviour match {
+          case Proactive => scheduler.targets(id)
+          case _ => Seq.empty[Packet]
+        }
+        sender ! Update(e, targets)
       }catch {
         case _: Throwable => println("WARNING: Simulator does not update agents which are already dead")
       }
@@ -199,7 +210,10 @@ class Simulator(val e: Environment, val behaviour: Behaviour, val rule : Schedul
             return true
           }
           if (debug) println(s"There is still some packets")
-          scheduler.assign()
+          behaviour match {
+            case Proactive => scheduler.assign()
+            case _ =>
+          }
         }
     }
     //3- process moves
