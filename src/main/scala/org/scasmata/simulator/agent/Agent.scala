@@ -52,9 +52,11 @@ class Agent(val id : Int, val behaviour: Behaviour) extends Actor {
       vision = e
       val nexTarget = targets.headOption
       if (nexTarget.isEmpty || nexTarget.get.weight == 1){
+        if (debug) println(s"Agent$id has a feasible target $nexTarget.get")
         worker ! Delegate(nexTarget,vision)
       }else{
-        println("Agent$id has no more feasible target")
+        if (debug) println(s"Agent$id has no more feasible target")
+        worker ! Delegate(None,vision)
       }
   }
 
