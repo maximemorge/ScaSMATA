@@ -1,9 +1,8 @@
 // Copyright (C) Maxime MORGE, Florian LECOINTE, Quentin BRIAND  2019
 package org.scasmata.simulator
 
-import org.scasmata.util.{ECTRule, GiftRule, RandomRule, SchedulingRule, SwapRule}
+import org.scasmata.util.{ECTRule, GiftRule, RandomRule, SchedulingRule, SwapAndGiftRule, SwapRule}
 import org.scasmata.util.ParseUtils._
-
 import org.scasmata.environment.{ActiveEntity, Dijkstra, Environment, Packet}
 import org.scamata.core.{Allocation, MATA, Task, Worker}
 import org.scamata.solver._
@@ -58,12 +57,13 @@ class Scheduler(env: Environment, rule : SchedulingRule){
       case ECTRule => new ECTSolver(pb,LCmax)
       case RandomRule => new RandomSolver(pb,LCmax)
       case GiftRule => new CentralizedSolver(pb,LCmax,SingleGiftOnly)
-      case SwapRule => new CentralizedSolver(pb,LCmax,SingleSwapAndSingleGift)
+      case SwapRule => new CentralizedSolver(pb,LCmax,SingleSwapOnly)
+      case SwapAndGiftRule => new CentralizedSolver(pb,LCmax,SingleSwapAndSingleGift)
       case _ => throw new RuntimeException("Scheduling rule does match to a MATA Solver")
     }
     if (debug) println(s"Scheduler assign allocation: $solverMATA")
     rule match {
-      case GiftRule | SwapRule => solverMATA.asInstanceOf[CentralizedSolver].trace = true
+      case GiftRule | SwapRule | SwapAndGiftRule=> solverMATA.asInstanceOf[CentralizedSolver].trace = true
       case _ =>
     }
     val allocation = solverMATA.run()
@@ -79,17 +79,18 @@ class Scheduler(env: Environment, rule : SchedulingRule){
     val solverMATA : Solver = rule match {
       case ECTRule => new ECTSolver(pb,LCmax)
       case RandomRule => new RandomSolver(pb,LCmax)
-      case GiftRule => new CentralizedSolver(pb,LCmax,SingleGiftOnly)
-      case SwapRule => new CentralizedSolver(pb,LCmax,SingleSwapAndSingleGift)
+      case GiftRule => new CentralizedSolver(pb,LCmax,SingleSwapOnly)
+      case SwapRule => new CentralizedSolver(pb,LCmax,SingleSwapOnly)
+      case SwapAndGiftRule => new CentralizedSolver(pb,LCmax,SingleSwapAndSingleGift)
       case _ => throw new RuntimeException("Scheduling rule does match to a MATA Solver")
     }
     if (debug) println(s"Scheduler reassign allocation: $solverMATA")
     rule match {
-      case GiftRule | SwapRule => solverMATA.asInstanceOf[CentralizedSolver].trace = true
+      case GiftRule | SwapRule | SwapAndGiftRule => solverMATA.asInstanceOf[CentralizedSolver].trace = true
       case _ =>
     }
     val allocation = rule match {
-      case GiftRule | SwapRule => solverMATA.asInstanceOf[DealSolver].reallocate(currentAllocation(pb))
+      case GiftRule | SwapRule | SwapAndGiftRule => solverMATA.asInstanceOf[DealSolver].reallocate(currentAllocation(pb))
       case ECTRule | RandomRule  => solverMATA.run()
       case _ => throw new RuntimeException("Scheduling rule does match to a MATA Solver")
     }
@@ -143,7 +144,7 @@ class Scheduler(env: Environment, rule : SchedulingRule){
   def generateAssignment(pb : MATA, allocation: Allocation) : Unit ={
     for((worker,bundle) <- allocation.bundle){
       // Sort the bundle in decreasing order of cost
-      val orderedBundle : Seq[Task] = bundle.toSeq.sortWith( pb.costMatrix(worker,_) > pb.costMatrix(worker,_))
+      val orderedBundle : Seq[Task] = bundle.toSeq.sortWith( pb.costMatrix(worker,_) < pb.costMatrix(worker,_))
       val idWorker = name2id(worker.name)
       var targets = Seq.empty[Packet]
       for (task <- orderedBundle){

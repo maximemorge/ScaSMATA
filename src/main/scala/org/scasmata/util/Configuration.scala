@@ -22,11 +22,12 @@ object Behaviour{
   */
 sealed abstract class SchedulingRule extends Product with Serializable{
   override def toString: String = this match{
-    case RandomRule => "RandomRule"
-    case ECTRule => "ECTRule"
-    case NoRule => "NoRule"
-    case GiftRule => "GiftRule"
-    case SwapRule => "SwapRule"
+    case RandomRule => "Random"
+    case ECTRule => "Early completion time"
+    case NoRule => "None"
+    case GiftRule => "Gift"
+    case SwapRule => "Swap"
+    case SwapAndGiftRule => "Gift & Swap"
   }
 }
 case object RandomRule extends SchedulingRule
@@ -34,9 +35,10 @@ case object ECTRule extends SchedulingRule
 case object NoRule extends SchedulingRule
 case object GiftRule extends SchedulingRule
 case object SwapRule extends SchedulingRule
+case object SwapAndGiftRule extends SchedulingRule
 
 object SchedulingRule{
-  val schedulingRules: Seq[SchedulingRule] = Seq(ECTRule, RandomRule, NoRule, GiftRule, SwapRule)
+  val schedulingRules: Seq[SchedulingRule] = Seq(ECTRule, RandomRule, NoRule, GiftRule, SwapRule, SwapAndGiftRule)
 }
 
 
@@ -52,6 +54,6 @@ object SchedulingRule{
   * @param rule for scheduling the gathering round
   */
 class Configuration(val height: Int = 8, val width: Int = 16, val n: Int = 4, val m: Int = 8, val minSizePackets: Int = 1, val maxSizePackets: Int = 1,
-                    val behaviour: Behaviour = Proactive, val rule : SchedulingRule = SwapRule) {
+                    val behaviour: Behaviour = Proactive, val rule : SchedulingRule = SwapAndGiftRule) {
 }
 

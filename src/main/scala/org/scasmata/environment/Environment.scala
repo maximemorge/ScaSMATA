@@ -253,7 +253,7 @@ class Environment(val height: Int, val width: Int, val n: Int = 1, val m: Int = 
     val (i,j) = location(entity)
     entity.unload()
     nbCollectedPackets +=1
-    println(s"NbCollectedPackets $nbCollectedPackets")
+    if (debug) println(s"NbCollectedPackets $nbCollectedPackets")
     grid(i)(j).setContent(Some(entity))
   }
 
