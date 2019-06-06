@@ -79,7 +79,7 @@ class Scheduler(env: Environment, rule : SchedulingRule){
     val solverMATA : Solver = rule match {
       case ECTRule => new ECTSolver(pb,LCmax)
       case RandomRule => new RandomSolver(pb,LCmax)
-      case GiftRule => new CentralizedSolver(pb,LCmax,SingleSwapOnly)
+      case GiftRule => new CentralizedSolver(pb,LCmax,SingleGiftOnly)
       case SwapRule => new CentralizedSolver(pb,LCmax,SingleSwapOnly)
       case SwapAndGiftRule => new CentralizedSolver(pb,LCmax,SingleSwapAndSingleGift)
       case _ => throw new RuntimeException("Scheduling rule does match to a MATA Solver")

@@ -35,12 +35,12 @@ class UI(val configuration: Configuration) extends Actor {
     // North : button
     private val toolPanel : BoxPanel =
     new BoxPanel(Orientation.Horizontal) {
-      contents += Button("Reset") {
+      contents += Button("New configuration") {
         val initUI = new ConfigurationFrame(configuration)
         initUI.visible = true
         close()
       }
-      contents += Button("New") {
+      contents += Button("New environment") {
         e.reInit()
         simulator = context.actorOf(Props(classOf[Simulator], e, configuration.behaviour, configuration.rule, delay), "Simulator" + Simulator.nextId) //Run simulator with 250ms of delay
         isRunning = 0
