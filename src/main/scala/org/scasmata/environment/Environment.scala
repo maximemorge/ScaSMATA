@@ -235,7 +235,7 @@ class Environment(val height: Int, val width: Int, val n: Int = 1, val m: Int = 
   }
 
   /**
-    * Updates the environment when a body pick up the environment
+    * Updates the environment when a body pick up a packet
     */
   def updatePickUp(entity: ActiveEntity, packet: Packet): Unit = {
     val (i,j) = location(entity)
@@ -247,7 +247,7 @@ class Environment(val height: Int, val width: Int, val n: Int = 1, val m: Int = 
   }
 
   /**
-    * Updates the environment when a body pick up the environment
+    * Updates the environment when a body put a packet down
     */
   def updatePutDown(entity: ActiveEntity, packet: Packet): Unit = {
     val (i,j) = location(entity)

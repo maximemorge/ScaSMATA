@@ -48,7 +48,11 @@ class ConfigurationFrame(configuration: Configuration) extends MainFrame {
         rule.selection.item = NoRule
         rule.peer.setEditable(false)
         case Proactive =>
-          rule.selection.item = ECTRule
+          rule.selection.item match {
+            case NoRule =>
+              rule.selection.item = ECTRule
+            case _ =>
+          }
           rule.peer.setEditable(true)
       }
     case SelectionChanged(`rule`) =>

@@ -211,7 +211,7 @@ class Simulator(val e: Environment, val behaviour: Behaviour, val rule : Schedul
           }
           if (debug) println(s"There is still some packets")
           behaviour match {
-            case Proactive => scheduler.assign()
+            case Proactive => scheduler.reassign()
             case _ =>
           }
         }

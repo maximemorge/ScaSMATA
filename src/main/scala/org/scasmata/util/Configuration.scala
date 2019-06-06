@@ -17,8 +17,6 @@ object Behaviour{
   val behaviours : Seq[Behaviour] = Seq(Proactive, Reactive)
 }
 
-
-
 /**
   * Rule for scheduling the gathering round
   */
@@ -27,15 +25,18 @@ sealed abstract class SchedulingRule extends Product with Serializable{
     case RandomRule => "RandomRule"
     case ECTRule => "ECTRule"
     case NoRule => "NoRule"
+    case GiftRule => "GiftRule"
+    case SwapRule => "SwapRule"
   }
 }
 case object RandomRule extends SchedulingRule
 case object ECTRule extends SchedulingRule
 case object NoRule extends SchedulingRule
-
+case object GiftRule extends SchedulingRule
+case object SwapRule extends SchedulingRule
 
 object SchedulingRule{
-  val schedulingRules: Seq[SchedulingRule] = Seq(ECTRule, RandomRule, NoRule)
+  val schedulingRules: Seq[SchedulingRule] = Seq(ECTRule, RandomRule, NoRule, GiftRule, SwapRule)
 }
 
 
@@ -51,6 +52,6 @@ object SchedulingRule{
   * @param rule for scheduling the gathering round
   */
 class Configuration(val height: Int = 8, val width: Int = 16, val n: Int = 4, val m: Int = 8, val minSizePackets: Int = 1, val maxSizePackets: Int = 1,
-                    val behaviour: Behaviour = Proactive, val rule : SchedulingRule = ECTRule) {
+                    val behaviour: Behaviour = Proactive, val rule : SchedulingRule = SwapRule) {
 }
 
