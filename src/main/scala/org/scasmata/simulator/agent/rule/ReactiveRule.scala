@@ -42,7 +42,7 @@ trait ReactiveRule extends OperationalRule{
       }
     }
     // 4. split
-    if (perception.e.isCrowd(id) && neighborhood.exists(c => c.hasDestination)){
+    if (perception.e.isTeam(id) && neighborhood.exists(c => c.hasDestination) && perception.e.canSplit(perception.e.teams(id))){
       return Split()
     }
     //5. move randomly if possible

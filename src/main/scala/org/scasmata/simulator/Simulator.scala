@@ -118,7 +118,7 @@ class Simulator(val env: Environment, val behaviour: Behaviour, val rule : Sched
         }
         sender ! Update(env, targets)
       }catch {
-        case _: Throwable => println("WARNING: Simulator does not update agents which are already dead")
+        case _: Throwable => println(s"WARNING: Simulator does not update agents which are already dead")
       }
     // When an agent wants to act
     case influence: Influence =>
@@ -240,24 +240,27 @@ class Simulator(val env: Environment, val behaviour: Behaviour, val rule : Sched
         val team = env.updateMerge(entity1, entity2)
         val actor = context.actorOf(Props(classOf[Agent], team.id, behaviour), team.id.toString)
         directory.add(team.id, actor) // Add it to the directory
-        init()
+        val future = actor ? Init(directory)
+        Await.result(future, timeout.duration) == Ready
         actor ! Update(env,Seq.empty[Packet])//The new team has no target
     }
 
     //5 - TODO process split
     splits.foreach{
       case (id,Split()) =>
-        val newBodies = env.updateSplit(env.crowds(id))
+        val newBodies = env.updateSplit(env.teams(id))
         if (newBodies.isEmpty) directory.adr(id) ! Failure
-        directory.adr(id) ! Kill
-        directory.remove(id, directory.adr(id))
-        newBodies.foreach{ b=>
-          val actor = context.actorOf(Props(classOf[Agent], b.id, behaviour), b.id.toString)
-          directory.add(b.id, actor) // Add it to the directory
-        }
-        init()
-        newBodies.foreach { b =>
-          directory.adr(b.id) ! Update(env,Seq.empty[Packet])//The bodies has no target
+        else {
+          directory.adr(id) ! Kill
+          directory.remove(id, directory.adr(id))
+          newBodies.foreach { b =>
+            val actor = context.actorOf(Props(classOf[Agent], b.id, behaviour), b.id.toString)
+            directory.add(b.id, actor) // Add it to the directory
+          }
+          init()
+          newBodies.foreach { b =>
+            directory.adr(b.id) ! Update(env, Seq.empty[Packet]) //The bodies has no target
+          }
         }
     }
     false
@@ -269,7 +272,7 @@ class Simulator(val env: Environment, val behaviour: Behaviour, val rule : Sched
   def reciprocal(merges: List[(Int, Merge)]) : Seq[(ActiveEntity,ActiveEntity)] = {
     if (merges.isEmpty) return Seq()
     val (id, influence) = merges.head
-    val origin = env.bodies.getOrElse(id,env.crowds(id))
+    val origin = env.bodies.getOrElse(id,env.teams(id))
     val target = influence.entity
     val tail = merges.tail
     if (tail.contains((target.id,Merge(origin))) &&
@@ -288,9 +291,9 @@ class Simulator(val env: Environment, val behaviour: Behaviour, val rule : Sched
     */
   def reallocateSteps() : Unit = {
     // for each crowd
-    env.crowds.filterKeys(_ > env.n).foreach{ case (crowdId,_) =>
+    env.teams.filterKeys(_ > env.n).foreach{ case (crowdId,_) =>
       // for each body within the crowd
-      env.crowds(crowdId).bodies.foreach{ body =>
+      env.teams(crowdId).bodies.foreach{ body =>
         steps += (body.id -> (steps.getOrElse(body.id,0)+steps.getOrElse(crowdId,0)))
       }
     }

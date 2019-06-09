@@ -16,35 +16,35 @@ import scala.util.Random
 class Environment(val height: Int, val width: Int, val n: Int = 1, val m: Int = 1, val minSizePackets: Int = 1, val maxSizePackets: Int = 2) {
   val debug = false
 
-  //Create the grid and the maps of packets/bodies
+  //Create the grid and the maps of packets/bodies/teams
   private val grid = Array.ofDim[Cell](height, width)
   for (i <- 0 until height; j <- 0 until width)
     grid(i)(j) = new Cell(i,j)
   var packets : Map[Int,Packet] = Map[Int,Packet]()
   var bodies : Map[Int,Body] = Map[Int,Body]()
-  var crowds : Map[Int,Team]= Map[Int,Team]()
+  var teams : Map[Int,Team]= Map[Int,Team]()
 
   /**
     * Returns the map of active entities
     */
-  def activeEntities : Map[Int,ActiveEntity] = bodies ++ crowds
+  def activeEntities : Map[Int,ActiveEntity] = bodies ++ teams
 
   /**
-    * Return true if an active entity is a crow
+    * Return true if an active entity is a team
     */
-  def isCrowd(id : Int) : Boolean = id > n
+  def isTeam(id : Int) : Boolean = id > n
 
 
-  // Number of packets which are putted down
+  // Number of packets which are collected
   private var nbCollectedPackets = 0
-  // Id of the next crowd
-  private var nextCrowdId = n + 1
+  // Id of the next team
+  private var nexTeamId = n + 1
 
   // Number of active entities
-  def nbActiveEntities : Int = bodies.size + crowds.size
+  def nbActiveEntities : Int = bodies.size + teams.size
 
   /**
-    * Returns true if all the packets are collected
+    * Return true if all the packets are collected
     */
   def isClean : Boolean = nbCollectedPackets == m
 
@@ -56,7 +56,7 @@ class Environment(val height: Int, val width: Int, val n: Int = 1, val m: Int = 
       grid(i)(j).setContent(None)
     packets = Map[Int,Packet]()
     bodies  = Map[Int,Body]()
-    crowds = Map[Int,Team]()
+    teams = Map[Int,Team]()
     nbCollectedPackets = 0
   }
   /**
@@ -67,30 +67,30 @@ class Environment(val height: Int, val width: Int, val n: Int = 1, val m: Int = 
     val random = new Random
     var idBody = 0
     var idPacket = 0
-    var coordinates = ListBuffer[(Int,Int)]() // List of coordinates of free cells
-    for (j <- 0 until width; i <- 0 until height) coordinates += ((i,j))
+    var freeCells = ListBuffer[(Int,Int)]()
+    for (j <- 0 until width; i <- 0 until height) freeCells += ((i,j))
     for (k <- 0 until n){// Add n agent bodies
       idBody += 1
-      val (i, j) = coordinates.remove(random.nextInt(coordinates.length))
-      coordinates --= Seq((i,j-1),(i,j+1),(i-1,j),(i+1,j),(i-1,j+1),(i-1,j-1),(i+1,j-1),(i+1,j+1))
-      if (coordinates.isEmpty) throw new RuntimeException("Too many bodies in the environment")
+      val (i, j) = freeCells.remove(random.nextInt(freeCells.length))
+      freeCells --= Seq((i,j-1),(i,j+1),(i-1,j),(i+1,j),(i-1,j+1),(i-1,j-1),(i+1,j-1),(i+1,j+1))
+      if (freeCells.isEmpty) throw new RuntimeException("Too many bodies in the environment")
       if (debug) println(s"Add body in ($i, $j)")
-      val newBody = new Body(id = idBody)// TODO Check
+      val newBody = new Body(id = idBody)
       bodies += (idBody -> newBody)
       grid(i)(j).setContent(Some(newBody))
     }
     for (k <- 0 until m){// Add m packets
       idPacket += 1
-      val (i, j) = coordinates.remove(random.nextInt(coordinates.length))
-      coordinates --= Seq((i,j-1),(i,j+1),(i-1,j),(i+1,j),(i-1,j+1),(i-1,j-1),(i+1,j-1),(i+1,j+1))
-      if (coordinates.isEmpty) throw new RuntimeException("Too many packets in the environment")
+      val (i, j) = freeCells.remove(random.nextInt(freeCells.length))
+      freeCells --= Seq((i,j-1),(i,j+1),(i-1,j),(i+1,j),(i-1,j+1),(i-1,j-1),(i+1,j-1),(i+1,j+1))
+      if (freeCells.isEmpty) throw new RuntimeException("Too many packets in the environment")
       if (debug) println(s"Add packet in ($i, $j)")
       val newPacket = new Packet(id = idPacket, weight = minSizePackets+random.nextInt(maxSizePackets-minSizePackets+1))
       packets += (idPacket -> newPacket)
       grid(i)(j).setContent(Some(newPacket))
     }
     // Add the destination
-    val (i, j) = coordinates.remove(random.nextInt(coordinates.length))
+    val (i, j) = freeCells.remove(random.nextInt(freeCells.length))
     if (debug) println(s"Add destination in ($i, $j)")
     grid(i)(j).setContent(Some(new Destination()))
     if (debug) println(this.toString)
@@ -114,7 +114,7 @@ class Environment(val height: Int, val width: Int, val n: Int = 1, val m: Int = 
     */
   def getActiveEntity(id : Int) : ActiveEntity = {
     if (id <= n) return bodies(id)
-    crowds(id)
+    teams(id)
   }
 
   /**
@@ -144,7 +144,7 @@ class Environment(val height: Int, val width: Int, val n: Int = 1, val m: Int = 
   /**
     * Returns the list of packets of size = 1
     */
-  def lightweightPackets(): Iterable[Packet] = packets.values.filter(_.weight == 1)
+  def lightPackets(): Iterable[Packet] = packets.values.filter(_.weight == 1)
 
   /**
     * Returns the list of packets of size > 1
@@ -262,7 +262,7 @@ class Environment(val height: Int, val width: Int, val n: Int = 1, val m: Int = 
     */
   def updateMerge(entity1: ActiveEntity, entity2: ActiveEntity): Team = {
     bodies = bodies.filterKeys(id => id != entity1.id && id != entity2.id)
-    crowds = crowds.filterKeys(id => id != entity1.id && id != entity2.id)
+    teams = teams.filterKeys(id => id != entity1.id && id != entity2.id)
     val set : Set[Body]= (entity1 match {
       case b : Body =>
         Set(b)
@@ -278,9 +278,9 @@ class Environment(val height: Int, val width: Int, val n: Int = 1, val m: Int = 
       case _ =>
         throw new RuntimeException("An active entity is expected for merge")
     })
-    val crowd = new Team(nextCrowdId, None, set)
-    nextCrowdId += 1
-    crowds = crowds + (crowd.id -> crowd)
+    val crowd = new Team(nexTeamId, None, set)
+    nexTeamId += 1
+    teams = teams + (crowd.id -> crowd)
     val (i,j) = location(entity1)
     val (k,l) = location(entity2)
     grid(k)(l).setContent(None)
@@ -290,14 +290,25 @@ class Environment(val height: Int, val width: Int, val n: Int = 1, val m: Int = 
   }
 
   /**
-    * Updates the environment when a crowd split and returns the set of bodies eventually none
+    * Return true if the team can split
     */
-  def updateSplit(crowd: Team): Set[Body] = {
-    val newBodies = crowd.bodies
-    val (i,j) = location(crowd)
+  def canSplit(team: Team): Boolean = {
+    val newBodies = team.bodies
+    val (i,j) = location(team)
     var possiblePlaces = neighborhood(i,j).filter(_.isEmpty)
-    if (possiblePlaces.length < newBodies.size) return Set()
-    crowds = crowds.filterKeys(_ != crowd.id)
+    if (possiblePlaces.length < newBodies.size) return false
+    true
+  }
+
+  /**
+    * Update the environment when a team splits and return the set of bodies eventually none
+    */
+  def updateSplit(team: Team): Set[Body] = {
+    val newBodies = team.bodies
+    val (i,j) = location(team)
+    var possiblePlaces = neighborhood(i,j).filter(_.isEmpty)
+    if (! canSplit(team)) return Set()
+    teams = teams.filterKeys(_ != team.id)
     grid(i)(j).setContent(None)
     newBodies.foreach{ body =>
       bodies = bodies + (body.id -> body)

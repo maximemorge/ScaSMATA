@@ -23,8 +23,6 @@ class Agent(val id : Int, val behaviour: Behaviour) extends Actor {
     case Reactive => context.actorOf(Props(classOf[ReactiveOperationalAgent], id), "worker"+id.toString)
   }
 
-  var negotiator : ActorRef= context.actorOf(Props(classOf[Negotiator], id), "negotiator"+id.toString)
-
   var vision: Environment = _
 
   /**
@@ -41,9 +39,6 @@ class Agent(val id : Int, val behaviour: Behaviour) extends Actor {
       this.simulator = sender
       this.directory = d
       if (debug) println(s"Agent$id inits its negotiator")
-      negotiator ! Init(d)
-    // The negotiator is ready
-    case Ready =>
       simulator ! Ready
     // The perception is updated
     case Update(e,targets) =>
@@ -76,7 +71,6 @@ class Agent(val id : Int, val behaviour: Behaviour) extends Actor {
     // The agent is killed
     case Kill =>
       worker ! Kill
-      negotiator ! Kill
       context.stop(self)
     // In case of unexpected event
     case message =>
