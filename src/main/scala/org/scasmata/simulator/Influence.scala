@@ -12,11 +12,13 @@ case object Play extends ManagingMessage
 case object Pause extends ManagingMessage
 case object Replay extends ManagingMessage
 case object Next extends ManagingMessage
+case class Delay(delay : Int) extends ManagingMessage
 case object Kill extends ManagingMessage
 case class Init(d: Directory) extends ManagingMessage // Provide directory to agents
 case class Outcome(steps: Map[Int,Int]) extends ManagingMessage // Simulator finished with steps for each agent
 case object Wait extends ManagingMessage // Start timer
 case object Go extends ManagingMessage // Timeout from a timer
+
 
 /**
   * Internal Message

@@ -24,7 +24,7 @@ import org.scasmata.util.{Behaviour, Proactive, Reactive, SchedulingRule}
   * @param rule for scheduling the gathering round
   * @param delay  waiting time before a reaction
   * */
-class Simulator(val env: Environment, val behaviour: Behaviour, val rule : SchedulingRule, val delay : Int = 0) extends Actor{
+class Simulator(val env: Environment, val behaviour: Behaviour, val rule : SchedulingRule, var delay : Int = 0) extends Actor{
   val debug = false
   // Default timeout of starting agent
   private val TIMEOUT_VALUE: FiniteDuration = 10 seconds
@@ -142,7 +142,9 @@ class Simulator(val env: Environment, val behaviour: Behaviour, val rule : Sched
       }
       influences = Map[Int, Influence]()
       step += 1
-
+    // When the delay is setup
+    case Delay(d) =>
+      delay = d
     case msg@_ =>
       println("WARNING: Simulator receives a message which was not expected: " + msg)
   }

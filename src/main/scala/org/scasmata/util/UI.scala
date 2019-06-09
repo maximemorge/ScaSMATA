@@ -82,7 +82,9 @@ class UI(val configuration: Configuration) extends Actor {
         labels = Map[Int, Label](0 -> new Label("Fast"), 500 -> new Label("Medium"), 1000 -> new Label("Slow"))
         paintLabels = true
         reactions += {
-          case ValueChanged(_) => delay = value
+          case ValueChanged(_) =>
+            delay = value
+            simulator ! Delay(delay)
         }
       }
       contents += slider
