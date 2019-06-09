@@ -1,6 +1,8 @@
 // Copyright (C) Maxime MORGE 2018
 package org.scasmata.util
 
+import org.scasmata.gui.ConfigurationFrame
+
 /**
   * Main application
   */

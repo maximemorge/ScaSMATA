@@ -1,14 +1,12 @@
 // Copyright (C) Maxime MORGE 2019
-package org.scasmata.util
+package org.scasmata.gui
 
-import scala.swing._
 import akka.actor.{ActorSystem, Props}
-
-import scala.swing.event.{EditDone, SelectionChanged}
-import akka.actor.{Actor, Props}
-import akka.util.Timeout
+import org.scasmata.util._
 
 import scala.language.postfixOps
+import scala.swing._
+import scala.swing.event.SelectionChanged
 
 /**
   * Class representing the configuration frame

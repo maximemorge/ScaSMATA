@@ -3,6 +3,7 @@ package org.scasmata.util
 
 import akka.actor.{ActorSystem, Props}
 import org.scasmata.environment.{Body, Destination, Environment, Packet}
+import org.scasmata.gui.UI
 
 /**
   * A toy environment

@@ -1,17 +1,18 @@
 // Copyright (C) Maxime MORGE 2018
-package org.scasmata.util
+package org.scasmata.gui
 
-import scala.swing._
 import java.awt.Color
 
-import scala.swing.event.ValueChanged
 import akka.actor.{Actor, Props}
 import akka.util.Timeout
-import scala.language.postfixOps
-import scala.concurrent.duration._
-
 import org.scasmata.environment._
 import org.scasmata.simulator._
+import org.scasmata.util.Configuration
+
+import scala.concurrent.duration._
+import scala.language.postfixOps
+import scala.swing._
+import scala.swing.event.ValueChanged
 
 /**
   * Class representing the user interface

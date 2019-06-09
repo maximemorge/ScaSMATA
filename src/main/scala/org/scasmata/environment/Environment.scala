@@ -51,7 +51,7 @@ class Environment(val height: Int, val width: Int, val n: Int = 1, val m: Int = 
   /**
     * Clear the environment
     */
-  def reset() : Unit = {
+  def clear() : Unit = {
     for (i <- 0 until height; j <- 0 until width)
       grid(i)(j).setContent(None)
     packets = Map[Int,Packet]()
@@ -100,7 +100,7 @@ class Environment(val height: Int, val width: Int, val n: Int = 1, val m: Int = 
     * Clear and initiate a random environment
     */
   def reInit() : Unit ={
-    reset()
+    clear()
     init()
   }
 
