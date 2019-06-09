@@ -34,7 +34,7 @@ class Cell(val i: Int, val j : Int) extends Publisher{
       case Some(b : Body) =>
         "fig"+b.id.toString +
           (if (b.load.isDefined) "load" else "")
-      case Some(c : Crowd) =>
+      case Some(c : Team) =>
         "fig"+c.ids.sorted.map(_.toString).reduce((left, right) => s"$left$right") +
           (if (c.load.isDefined) "load" else "")
       case Some(p : Packet) =>

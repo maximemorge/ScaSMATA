@@ -22,7 +22,7 @@ class Environment(val height: Int, val width: Int, val n: Int = 1, val m: Int = 
     grid(i)(j) = new Cell(i,j)
   var packets : Map[Int,Packet] = Map[Int,Packet]()
   var bodies : Map[Int,Body] = Map[Int,Body]()
-  var crowds : Map[Int,Crowd]= Map[Int,Crowd]()
+  var crowds : Map[Int,Team]= Map[Int,Team]()
 
   /**
     * Returns the map of active entities
@@ -56,7 +56,7 @@ class Environment(val height: Int, val width: Int, val n: Int = 1, val m: Int = 
       grid(i)(j).setContent(None)
     packets = Map[Int,Packet]()
     bodies  = Map[Int,Body]()
-    crowds = Map[Int,Crowd]()
+    crowds = Map[Int,Team]()
     nbCollectedPackets = 0
   }
   /**
@@ -260,25 +260,25 @@ class Environment(val height: Int, val width: Int, val n: Int = 1, val m: Int = 
   /**
     * Updates the environment when two entities merge
     */
-  def updateMerge(entity1: ActiveEntity, entity2: ActiveEntity): Crowd = {
+  def updateMerge(entity1: ActiveEntity, entity2: ActiveEntity): Team = {
     bodies = bodies.filterKeys(id => id != entity1.id && id != entity2.id)
     crowds = crowds.filterKeys(id => id != entity1.id && id != entity2.id)
     val set : Set[Body]= (entity1 match {
       case b : Body =>
         Set(b)
-      case c : Crowd =>
+      case c : Team =>
         c.bodies
       case _ =>
         throw new RuntimeException("An active entity is expected for merge")
     }) | (entity2 match {
       case b : Body =>
         Set(b)
-      case c : Crowd =>
+      case c : Team =>
         c.bodies
       case _ =>
         throw new RuntimeException("An active entity is expected for merge")
     })
-    val crowd = new Crowd(nextCrowdId, None, set)
+    val crowd = new Team(nextCrowdId, None, set)
     nextCrowdId += 1
     crowds = crowds + (crowd.id -> crowd)
     val (i,j) = location(entity1)
@@ -292,7 +292,7 @@ class Environment(val height: Int, val width: Int, val n: Int = 1, val m: Int = 
   /**
     * Updates the environment when a crowd split and returns the set of bodies eventually none
     */
-  def updateSplit(crowd: Crowd): Set[Body] = {
+  def updateSplit(crowd: Team): Set[Body] = {
     val newBodies = crowd.bodies
     val (i,j) = location(crowd)
     var possiblePlaces = neighborhood(i,j).filter(_.isEmpty)
@@ -316,7 +316,7 @@ class Environment(val height: Int, val width: Int, val n: Int = 1, val m: Int = 
     packet.color = getActiveEntity(id) match {
       case b : Body =>
          Color.BELONGINGS(b.id)
-      case c : Crowd =>
+      case c : Team =>
         Color.COLLECTIVE_BELONGINGS(c.ids)
       case _ =>
         throw new RuntimeException("An active entity is expected for having a target")

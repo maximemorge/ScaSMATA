@@ -96,12 +96,12 @@ class Body(id: Int, load : Option[Packet] = None) extends ActiveEntity(id, load)
 }
 
 /**
-  * A crowd correspond to a macro-level agent
+  * A team correspond to a macro-level agent
   * @param id of the bodies which is equals to the agent id
   * @param load the body eventually carries on a packet
-  * @param bodies which consist of the crowd
+  * @param bodies which consist of the team
   */
-class Crowd(id: Int, load: Option[Packet] = None, val bodies : Set[Body])
+class Team(id: Int, load: Option[Packet] = None, val bodies : Set[Body])
   extends ActiveEntity(id, load){
   override val capacity : Int = bodies.size // size of the packet it can carry on
   override def toString: String = s"C$ids($load)"
