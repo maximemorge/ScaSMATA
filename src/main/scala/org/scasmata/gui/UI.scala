@@ -42,7 +42,12 @@ class UI(val configuration: Configuration) extends Actor {
         close()
       }
       contents += Button("New environment") {
-        e.reInit()
+        e.reGenerate()
+        simulator = context.actorOf(Props(classOf[Simulator], e, configuration.behaviour, configuration.rule, delay), "Simulator" + Simulator.nextId) //Run simulator with 250ms of delay
+        isRunning = 0
+      }
+      contents += Button("Reset") {
+        e.reset()
         simulator = context.actorOf(Props(classOf[Simulator], e, configuration.behaviour, configuration.rule, delay), "Simulator" + Simulator.nextId) //Run simulator with 250ms of delay
         isRunning = 0
       }

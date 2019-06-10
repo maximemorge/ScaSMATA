@@ -24,6 +24,13 @@ class Environment(val height: Int, val width: Int, val n: Int = 1, val m: Int = 
   var bodies : Map[Int,Body] = Map[Int,Body]()
   var teams : Map[Int,Team]= Map[Int,Team]()
 
+  // Number of packets which are collected
+  private var nbCollectedPackets = 0
+  // Id of the next team
+  private var nexTeamId = n + 1
+
+  val initialState = new EnvironmentState(height, width, packets, bodies, teams)
+
   /**
     * Returns the map of active entities
     */
@@ -35,11 +42,6 @@ class Environment(val height: Int, val width: Int, val n: Int = 1, val m: Int = 
   def isTeam(id : Int) : Boolean = id > n
 
 
-  // Number of packets which are collected
-  private var nbCollectedPackets = 0
-  // Id of the next team
-  private var nexTeamId = n + 1
-
   // Number of active entities
   def nbActiveEntities : Int = bodies.size + teams.size
 
@@ -48,17 +50,6 @@ class Environment(val height: Int, val width: Int, val n: Int = 1, val m: Int = 
     */
   def isClean : Boolean = nbCollectedPackets == m
 
-  /**
-    * Clear the environment
-    */
-  def clear() : Unit = {
-    for (i <- 0 until height; j <- 0 until width)
-      grid(i)(j).setContent(None)
-    packets = Map[Int,Packet]()
-    bodies  = Map[Int,Body]()
-    teams = Map[Int,Team]()
-    nbCollectedPackets = 0
-  }
   /**
     * Initiate a random environment such as each entity has no neighbor, i.e.
     * the destination and the packets are available for each agent
@@ -94,12 +85,37 @@ class Environment(val height: Int, val width: Int, val n: Int = 1, val m: Int = 
     if (debug) println(s"Add destination in ($i, $j)")
     grid(i)(j).setContent(Some(new Destination()))
     if (debug) println(this.toString)
+    initialState.save(grid, packets, bodies, teams)
+  }
+
+  /**
+    * Clear the environment
+    */
+  def clear() : Unit = {
+    for (i <- 0 until height; j <- 0 until width)
+      grid(i)(j).setContent(None)
+    packets = Map[Int,Packet]()
+    bodies  = Map[Int,Body]()
+    teams = Map[Int,Team]()
+    nbCollectedPackets = 0
+  }
+
+  /**
+    * Reset to the initial state
+    */
+  def reset() : Unit = {
+    packets = initialState.packets
+    bodies = initialState.bodies
+    teams = initialState.teams
+    nbCollectedPackets = 0
+    for (i <- 0 until height; j <- 0 until width)
+      grid(i)(j).setContent(initialState.grid(i)(j).content)
   }
 
   /**
     * Clear and initiate a random environment
     */
-  def reInit() : Unit ={
+  def reGenerate() : Unit ={
     clear()
     init()
   }
