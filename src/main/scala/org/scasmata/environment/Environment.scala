@@ -5,15 +5,16 @@ import scala.collection.mutable.ListBuffer
 import scala.util.Random
 
 /**
-  * A representation of the environment which contains 1 destination, n agents and m packets
-  * @param height of the environment
-  * @param width of the environment
+  * An environment is a grid which contains 1 destination, n agents and m packets
+  * @param height of the grid
+  * @param width of the grid
   * @param n number of bodies
   * @param m number of packets
   * @param minSizePackets minimal size of the packets (1 by default)
   * @param maxSizePackets maximal size of the packets (2 by default)
   */
-class Environment(val height: Int, val width: Int, val n: Int = 1, val m: Int = 1, val minSizePackets: Int = 1, val maxSizePackets: Int = 2) {
+class Environment(val height: Int, val width: Int, val n: Int = 1, val m: Int = 1,
+                  val minSizePackets: Int = 1, val maxSizePackets: Int = 2) {
   val debug = false
 
   //Create the grid and the maps of packets/bodies/teams
@@ -23,13 +24,12 @@ class Environment(val height: Int, val width: Int, val n: Int = 1, val m: Int = 
   var packets : Map[Int,Packet] = Map[Int,Packet]()
   var bodies : Map[Int,Body] = Map[Int,Body]()
   var teams : Map[Int,Team]= Map[Int,Team]()
-
   // Number of packets which are collected
   private var nbCollectedPackets = 0
   // Id of the next team
   private var nexTeamId = n + 1
-
-  val initialState = new EnvironmentState(height, width, packets, bodies, teams)
+  // Initial state in case of reset
+  val initialState = new EnvironmentState(height, width)
 
   /**
     * Returns the map of active entities
@@ -42,7 +42,9 @@ class Environment(val height: Int, val width: Int, val n: Int = 1, val m: Int = 
   def isTeam(id : Int) : Boolean = id > n
 
 
-  // Number of active entities
+  /**
+    * Return the number of active entities
+    */
   def nbActiveEntities : Int = bodies.size + teams.size
 
   /**
@@ -92,16 +94,16 @@ class Environment(val height: Int, val width: Int, val n: Int = 1, val m: Int = 
     * Clear the environment
     */
   def clear() : Unit = {
-    for (i <- 0 until height; j <- 0 until width)
-      grid(i)(j).setContent(None)
     packets = Map[Int,Packet]()
     bodies  = Map[Int,Body]()
     teams = Map[Int,Team]()
     nbCollectedPackets = 0
+    for (i <- 0 until height; j <- 0 until width)
+      grid(i)(j).setContent(None)
   }
 
   /**
-    * Reset to the initial state
+    * Reset the environment, i.e. restore the initial state
     */
   def reset() : Unit = {
     packets = initialState.packets
@@ -216,7 +218,6 @@ class Environment(val height: Int, val width: Int, val n: Int = 1, val m: Int = 
     if (j<width-1 && isAccessible(i,j+1)) directions +:= East
     directions
   }
-
 
   /**
     * Returns true if a move is possible, i.e. not in a passive entity

@@ -4,7 +4,11 @@ package org.scasmata.environment
 /**
   * An entity of the environment is active or passive
   */
-abstract class Entity{
+abstract class Entity {
+
+  /**
+    * Copy the entity
+    */
   def copy(): Entity = this
 }
 
@@ -35,9 +39,10 @@ class Packet(val id: Int, val weight: Int, var color: Color = Brown) extends Pas
       case _ => false
     }
   }
-
+  /**
+    * Copy the packet
+    */
   override def copy(): Packet = new Packet(id, weight, color)
-
 }
 
 /**
@@ -59,9 +64,12 @@ case class ActiveEntity(val id: Int, var load: Option[Packet] = None) extends En
     }
   }
 
+  /**
+    * Copy the entity
+    */
   override def copy(): ActiveEntity = {
     val newLoad : Option[Packet]= if (load.nonEmpty) Some(load.get.copy()) else None
-    new ActiveEntity(id, newLoad)
+    ActiveEntity(id, newLoad)
   }
 
   /**
@@ -100,13 +108,16 @@ case class ActiveEntity(val id: Int, var load: Option[Packet] = None) extends En
   */
 class Body(id: Int, load : Option[Packet] = None) extends ActiveEntity(id, load){
   override val capacity = 1 // size of the packet it can carry on
+
   override def toString: String = s"B$id($load)"
 
+  /**
+    * Copy the body
+    */
   override def copy(): Body = {
     val newLoad : Option[Packet]= if (load.nonEmpty) Some(load.get.copy()) else None
     new Body(id, newLoad)
   }
-
 }
 
 /**
@@ -122,11 +133,13 @@ class Team(id: Int, load: Option[Packet] = None, val bodies : Set[Body])
   // The ids of the bodies
   val ids  : Seq[Int] = bodies.map(b => b.id).toSeq.sorted
 
+  /**
+    * Copy the team
+    */
   override def copy(): Team = {
     val newLoad : Option[Packet]= if (load.nonEmpty) Some(load.get.copy()) else None
     val newBodies = for (b <- bodies) yield b.copy()
     new Team(id, newLoad, newBodies)
   }
-
 
 }
