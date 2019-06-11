@@ -7,7 +7,7 @@ import akka.actor.{Actor, Props}
 import akka.util.Timeout
 import org.scasmata.environment._
 import org.scasmata.simulator._
-import org.scasmata.util.{Behaviour, Configuration, ECTRule, NoRule, Proactive, Reactive, SchedulingRule}
+import org.scasmata.util.{Configuration, Behaviour, Proactive, Reactive, SchedulingRule, NoRule, ECTRule}
 
 import scala.concurrent.duration._
 import scala.language.postfixOps
@@ -20,18 +20,21 @@ import scala.swing.event.{SelectionChanged, ValueChanged}
   */
 class UI(var configuration: Configuration) extends Actor {
 
+
   val e = new Environment(configuration.height, configuration.width, configuration.n, configuration.m,
     configuration.minSizePackets, configuration.maxSizePackets)
   e.init()
+
   var delay = 250 //with 250ms of delay
   var simulator = context.actorOf(Props(classOf[Simulator], e, configuration.behaviour, configuration.rule, delay), "Simulator"+Simulator.nextId)//Run simulator
 
   val mainFrame = new MainFrame(){
-    title = "ScaSMATA (Scalable Situated Multi-Agent Task Allocation) GUI"
+    title = "ScaSMATA (Scalable Situated Multi-Agent Task Allocation)"
     val TIMEOUT_VALUE: FiniteDuration = 6000 minutes // Default timeout of a run
     implicit val timeout: Timeout = Timeout(TIMEOUT_VALUE)
 
     var isRunning = 0 // 0 if never played, 1 if pause, 2 if replayed
+
     private val boardSquares = Array.ofDim[Label](e.height, e.width)
     // North : button
     private val toolPanel : BoxPanel =
@@ -43,6 +46,7 @@ class UI(var configuration: Configuration) extends Actor {
         rule.selection.item = configuration.rule
         // Warrant the coherence in the configuration
         listenTo(behaviour.selection, rule.selection)
+
         reactions += {
           case SelectionChanged(`behaviour`) =>
             configuration.behaviour = behaviour.selection.item
@@ -69,12 +73,13 @@ class UI(var configuration: Configuration) extends Actor {
                 behaviour.peer.setEditable(true)
             }
         }
-        contents += Button("New configuration") {
+
+        contents += Button("Configure") {
           val initUI = new ConfigurationFrame(configuration)
           initUI.visible = true
           close()
         }
-        contents += Button("New environment") {
+        contents += Button("Randomize") {
           e.reGenerate()
           simulator = context.actorOf(Props(classOf[Simulator], e, configuration.behaviour, configuration.rule, delay), "Simulator" + Simulator.nextId) //Run simulator with 250ms of delay
           isRunning = 0
@@ -85,7 +90,9 @@ class UI(var configuration: Configuration) extends Actor {
           isRunning = 0
         }
         contents += behaviour
+
         contents += rule
+
         contents += Button("Play/Pause") {
           isRunning match {
             case 0 =>
@@ -109,7 +116,12 @@ class UI(var configuration: Configuration) extends Actor {
         contents += next
 
         contents += Button("Exit") {
-          sys.exit(0)
+          val res = Dialog.showConfirmation(contents.head,
+            "Are you sure you want to quit ScaSMATA ?",
+            optionType = Dialog.Options.YesNo,
+            title = title)
+          if (res == Dialog.Result.Ok)
+            sys.exit(0)
         }
 
         val slider : Slider = new scala.swing.Slider() {
@@ -132,6 +144,8 @@ class UI(var configuration: Configuration) extends Actor {
         for (e <- contents) e.xLayoutAlignment = 0.0
         border = Swing.EmptyBorder(10, 10, 10, 10)
       }
+
+
     // Center : grid panel
     private val gridPanel =
       new GridPanel(e.height, e.height) {
@@ -171,7 +185,7 @@ class UI(var configuration: Configuration) extends Actor {
         case(id,nbSteps) => result+=s"Agent$id : $nbSteps steps\n"
       }
       result+="Max= "+steps.values.max+"\n"
-      result+="Mean= "+steps.values.sum.toDouble/steps.values.size+"\n"
+      //result+="Mean= "+steps.values.sum.toDouble/steps.values.size+"\n"
       Dialog.showMessage(mainFrame,result, title="OK")
 
     case msg@_ =>

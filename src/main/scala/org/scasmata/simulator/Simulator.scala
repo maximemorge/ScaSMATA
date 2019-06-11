@@ -12,7 +12,7 @@ import scala.concurrent.duration._
 import scala.language.postfixOps
 import org.scasmata.environment.{ActiveEntity, Center, Environment, Packet}
 import org.scasmata.simulator.agent.Agent
-import org.scasmata.util.{Behaviour, Proactive, Reactive, SchedulingRule}
+import org.scasmata.util.{Behaviour, GiftRule, Proactive, Reactive, SchedulingRule, SwapRule}
 
 /**
   * Simulator which :
@@ -26,6 +26,7 @@ import org.scasmata.util.{Behaviour, Proactive, Reactive, SchedulingRule}
   * */
 class Simulator(val env: Environment, val behaviour: Behaviour, val rule : SchedulingRule, var delay : Int = 0) extends Actor{
   val debug = false
+  val warning = false
   // Default timeout of starting agent
   private val TIMEOUT_VALUE: FiniteDuration = 10 seconds
   implicit val timeout: Timeout = Timeout(TIMEOUT_VALUE)
@@ -118,7 +119,7 @@ class Simulator(val env: Environment, val behaviour: Behaviour, val rule : Sched
         }
         sender ! Update(env, targets)
       }catch {
-        case _: Throwable => println(s"WARNING: Simulator does not update agents which are already dead")
+        case _: Throwable => if (warning) println(s"WARNING: Simulator does not update agents which are already dead")
       }
     // When an agent wants to act
     case influence: Influence =>
