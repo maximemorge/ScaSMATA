@@ -54,6 +54,6 @@ object SchedulingRule{
   * @param rule for scheduling the gathering round
   */
 class Configuration(val height: Int = 8, val width: Int = 16, val n: Int = 4, val m: Int = 8, val minSizePackets: Int = 1, val maxSizePackets: Int = 1,
-                    val behaviour: Behaviour = Proactive, val rule : SchedulingRule = SwapAndGiftRule) {
+                    var behaviour: Behaviour = Proactive, var rule : SchedulingRule = SwapAndGiftRule) {
 }
 

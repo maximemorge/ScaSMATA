@@ -289,14 +289,14 @@ class Simulator(val env: Environment, val behaviour: Behaviour, val rule : Sched
   }
 
   /**
-    * Reallocate the steps of crowds toward the bodies
+    * Reallocate the steps of teams toward the bodies
     */
   def reallocateSteps() : Unit = {
-    // for each crowd
-    env.teams.filterKeys(_ > env.n).foreach{ case (crowdId,_) =>
-      // for each body within the crowd
-      env.teams(crowdId).bodies.foreach{ body =>
-        steps += (body.id -> (steps.getOrElse(body.id,0)+steps.getOrElse(crowdId,0)))
+    // for each team
+    env.teams.filterKeys(_ > env.n).foreach{ case (teamId,_) =>
+      // for each body within the team
+      env.teams(teamId).bodies.foreach{ body =>
+        steps += (body.id -> (steps.getOrElse(body.id,0)+steps.getOrElse(teamId,0)))
       }
     }
     // filter steps for only bodies
