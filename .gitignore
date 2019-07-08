@@ -26,6 +26,9 @@ project/plugins/project/
 *.iml
 .cache-main
 
+### VSCode ###
+.metals/
+
 project/build.properties
 project/project/
 experiments/figures/
